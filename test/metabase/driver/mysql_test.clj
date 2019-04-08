@@ -17,6 +17,7 @@
             [metabase.test.data
              [datasets :refer [expect-with-driver]]
              [interface :refer [def-database-definition]]]
+            [metabase.test.util.timezone :as tu.tz]
             [metabase.util.date :as du]
             [toucan.db :as db]
             [toucan.util.test :as tt]))
@@ -30,22 +31,9 @@
 
 (expect-with-driver :mysql
   [[1 nil]]
-  ;; TODO - use the `rows` function from `metabse.query-processor-test`. Preferrably after it's moved to some sort of
-  ;; shared test util namespace
   (-> (data/dataset metabase.driver.mysql-test/all-zero-dates
         (data/run-mbql-query exciting-moments-in-history))
-      :data :rows))
-
-
-;; make sure connection details w/ extra params work as expected
-(expect
-  (str "//localhost:3306/cool?zeroDateTimeBehavior=convertToNull&useUnicode=true&characterEncoding=UTF8"
-       "&characterSetResults=UTF8&useLegacyDatetimeCode=true&useJDBCCompliantTimezoneShift=true"
-       "&useSSL=false&tinyInt1isBit=false")
-  (:subname (sql-jdbc.conn/connection-details->spec :mysql {:host               "localhost"
-                                                            :port               "3306"
-                                                            :dbname             "cool"
-                                                            :additional-options "tinyInt1isBit=false"})))
+      qpt/rows))
 
 
 ;; Test how TINYINT(1) columns are interpreted. By default, they should be interpreted as integers, but with the
@@ -140,7 +128,7 @@
 ;; This test ensures if our JVM timezone and reporting timezone are Asia/Hong_Kong, we get a correctly formatted date
 (expect-with-driver :mysql
   ["2018-04-18T00:00:00.000+08:00"]
-  (tu/with-jvm-tz (t/time-zone-for-id "Asia/Hong_Kong")
+  (tu.tz/with-jvm-tz (t/time-zone-for-id "Asia/Hong_Kong")
     (tu/with-temporary-setting-values [report-timezone "Asia/Hong_Kong"]
       (qpt/first-row
         (du/with-effective-timezone (Database (data/id))
@@ -163,7 +151,7 @@
 ;; off by a day
 (expect-with-driver :mysql
   ["2018-04-18T00:00:00.000-07:00"]
-  (tu/with-jvm-tz (t/time-zone-for-id "Asia/Hong_Kong")
+  (tu.tz/with-jvm-tz (t/time-zone-for-id "Asia/Hong_Kong")
     (tu/with-temporary-setting-values [report-timezone "America/Los_Angeles"]
       (qpt/first-row
         (du/with-effective-timezone (Database (data/id))
@@ -174,3 +162,35 @@
              :native     {:query "SELECT cast({{date}} as date)"
                           :template-tags {:date {:name "date" :display_name "Date" :type "date" }}}
              :parameters [{:type "date/single" :target ["variable" ["template-tag" "date"]] :value "2018-04-18"}]}))))))
+
+(def ^:private sample-connection-details
+  {:db "my_db", :host "localhost", :port "3306", :user "cam", :password "bad-password"})
+
+(def ^:private sample-jdbc-spec
+  {:password             "bad-password"
+   :characterSetResults  "UTF8"
+   :characterEncoding    "UTF8"
+   :classname            "org.mariadb.jdbc.Driver"
+   :subprotocol          "mysql"
+   :zeroDateTimeBehavior "convertToNull"
+   :sessionVariables     "sql_mode='ALLOW_INVALID_DATES'"
+   :user                 "cam"
+   :subname              "//localhost:3306/my_db"
+   :useCompression       true
+   :useUnicode           true})
+
+;; Do `:ssl` connection details give us the connection spec we'd expect?
+(expect
+  (assoc sample-jdbc-spec :useSSL true)
+  (sql-jdbc.conn/connection-details->spec :mysql (assoc sample-connection-details :ssl true)))
+
+;; what about non-SSL connections?
+(expect
+  (assoc sample-jdbc-spec :useSSL false)
+  (sql-jdbc.conn/connection-details->spec :mysql sample-connection-details))
+
+;; Connections that are `:ssl false` but with `useSSL` in the additional options should be treated as SSL (see #9629)
+(expect
+  (assoc sample-jdbc-spec :useSSL true, :subname "//localhost:3306/my_db?useSSL=true&trustServerCertificate=true")
+  (sql-jdbc.conn/connection-details->spec :mysql
+    (assoc sample-connection-details :ssl false, :additional-options "useSSL=true&trustServerCertificate=true")))

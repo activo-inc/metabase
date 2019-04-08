@@ -41,7 +41,8 @@ jobs:
           command: >
             for file in `find ./src -type f -name '*.clj' | sort`;
               do echo `md5sum $file` >> backend-checksums.txt;
-            done
+            done;
+            echo `md5sum $project.clj` >> backend-checksums.txt
       - persist_to_workspace:
           root: /home/circleci/
           paths:
@@ -112,6 +113,18 @@ jobs:
       - run:
           name: Run dockstring-checker
           command: lein with-profile +ci docstring-checker
+          no_output_timeout: 5m
+
+  be-linter-namespace-decls:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: /home/circleci/
+      - restore_cache:
+          <<: *restore-be-deps-cache
+      - run:
+          name: Run namespace decl checker
+          command: lein with-profile +ci check-namespace-decls
           no_output_timeout: 5m
 
   be-linter-bikeshed:
@@ -221,14 +234,14 @@ jobs:
     working_directory: /home/circleci/metabase/metabase/
     docker:
       - image: circleci/clojure:lein-2.8.1-node-browsers
-      - image: circleci/mongo:3.2
+      - image: circleci/mongo:3.4
     steps:
       - attach_workspace:
           at: /home/circleci/
       - restore_cache:
           <<: *restore-be-deps-cache
       - run:
-          name: Run backend unit tests (MongoDB 3.2)
+          name: Run backend unit tests (MongoDB 3.4)
           environment:
             DRIVERS: h2,mongo
           command: >
@@ -281,6 +294,20 @@ jobs:
             /home/circleci/metabase/metabase/.circleci/skip-driver-tests.sh snowflake ||
             lein with-profile +ci test
           no_output_timeout: 10m
+
+  yaml-linter:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: /home/circleci/
+      - run:
+          name: Install yamllint
+          command: npm install yaml-lint
+          no_output_timeout: 2m
+      - run:
+          name: Lint YAML files
+          command: ./node_modules/.bin/yamllint `find resources -name '*.yaml'`
+          no_output_timeout: 2m
 
   be-tests-sqlserver:
     <<: *defaults
@@ -522,6 +549,18 @@ jobs:
           command: yarn run test-unit
           no_output_timeout: 5m
 
+  fe-tests-integration:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: /home/circleci/
+      - restore_cache:
+          <<: *restore-fe-deps-cache
+      - run:
+          name: Run frontend integration tests
+          command: yarn run test-integration
+          no_output_timeout: 5m
+
   build-uberjar:
     <<: *defaults
     steps:
@@ -544,7 +583,7 @@ jobs:
           paths:
             - /home/circleci/metabase/metabase/target/uberjar/metabase.jar
 
-  fe-tests-integrated:
+  fe-tests-e2e:
     <<: *defaults
     steps:
       - attach_workspace:
@@ -558,8 +597,8 @@ jobs:
           name: Generate version file
           command: ./bin/build version
       - run:
-          name: Run frontend integrated tests
-          command: yarn run test-integrated-no-build
+          name: Run frontend e2e tests
+          command: yarn run test-e2e-no-build
           no_output_timeout: 5m
 
 
@@ -597,6 +636,9 @@ workflows:
           requires:
             - be-deps
       - be-linter-docstring-checker:
+          requires:
+            - be-deps
+      - be-linter-namespace-decls:
           requires:
             - be-deps
       - be-linter-bikeshed:
@@ -647,6 +689,9 @@ workflows:
       - be-tests-snowflake:
           requires:
             - be-tests
+      - yaml-linter:
+          requires:
+            - checkout
       - fe-deps:
           requires:
             - checkout
@@ -665,10 +710,13 @@ workflows:
       - fe-tests-unit:
           requires:
             - fe-deps
+      - fe-tests-integration:
+          requires:
+            - fe-deps
       - build-uberjar:
           requires:
             - be-deps
-      - fe-tests-integrated:
+      - fe-tests-e2e:
           requires:
             - build-uberjar
             - fe-deps
@@ -676,6 +724,7 @@ workflows:
           requires:
             - be-linter-eastwood
             - be-linter-docstring-checker
+            - be-linter-namespace-decls
             - be-linter-bikeshed
             - be-linter-reflection-warnings
 
@@ -695,12 +744,15 @@ workflows:
             - be-tests-vertica
             - be-tests-snowflake
 
+            - yaml-linter
+
             - fe-linter-eslint
             - fe-linter-prettier
             - fe-linter-flow
             - fe-tests-karma
             - fe-tests-unit
-            - fe-tests-integrated
+            - fe-tests-integration
+            - fe-tests-e2e
           filters:
             branches:
               only: master

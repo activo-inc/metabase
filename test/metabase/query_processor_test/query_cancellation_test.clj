@@ -1,13 +1,11 @@
 (ns metabase.query-processor-test.query-cancellation-test
-  "TODO - This is sql-jdbc specific, so it should go in a sql-jdbc test namespace."
   (:require [clojure.java.jdbc :as jdbc]
-            [expectations :refer [expect]]
+            [expectations :refer :all]
             [metabase.test.util :as tu]
             [metabase.test.util.log :as tu.log]))
 
 (deftype FakePreparedStatement [called-cancel?]
   java.sql.PreparedStatement
-  (closeOnCompletion [_]) ; no-op
   (cancel [_] (deliver called-cancel? true))
   (close [_] true))
 

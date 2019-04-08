@@ -94,7 +94,7 @@ export default class EmbedFrame extends Component {
 
     const footer = true;
 
-    const { bordered, titled, theme, hide_parameters } = {
+    const { bordered, titled, theme } = {
       ...DEFAULT_OPTIONS,
       ...parseHashOptions(location.hash),
     };
@@ -127,7 +127,6 @@ export default class EmbedFrame extends Component {
                     query={location.query}
                     setParameterValue={setParameterValue}
                     syncQueryString
-                    hideParameters={hide_parameters}
                     isQB
                   />
                 </div>

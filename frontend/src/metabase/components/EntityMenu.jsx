@@ -92,9 +92,7 @@ class EntityMenu extends Component {
                   {menuItemContent || (
                     <ol className="py1" style={{ minWidth: 210 }}>
                       {items.map(item => {
-                        if (!item) {
-                          return null;
-                        } else if (item.content) {
+                        if (item.content) {
                           return (
                             <li key={item.title}>
                               <EntityMenuItem

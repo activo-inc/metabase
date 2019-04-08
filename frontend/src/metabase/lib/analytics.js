@@ -13,14 +13,12 @@ const MetabaseAnalytics = {
       // scrub query builder urls to remove serialized json queries from path
       url = url.lastIndexOf("/q/", 0) === 0 ? "/q/" : url;
 
-      const { tag } = MetabaseSettings.get("version") || {};
+      const { tag } = MetabaseSettings.get("version");
 
       // $FlowFixMe
-      if (typeof ga === "function") {
-        ga("set", "dimension1", tag);
-        ga("set", "page", url);
-        ga("send", "pageview", url);
-      }
+      ga("set", "dimension1", tag);
+      ga("set", "page", url);
+      ga("send", "pageview", url);
     }
   },
 
@@ -31,11 +29,11 @@ const MetabaseAnalytics = {
     label?: ?(string | number | boolean),
     value?: ?number,
   ) {
-    const { tag } = MetabaseSettings.get("version") || {};
+    const { tag } = MetabaseSettings.get("version");
 
     // category & action are required, rest are optional
-    // $FlowFixMe
-    if (typeof ga === "function" && category && action) {
+    if (category && action) {
+      // $FlowFixMe
       ga("set", "dimension1", tag);
       ga("send", "event", category, action, label, value);
     }

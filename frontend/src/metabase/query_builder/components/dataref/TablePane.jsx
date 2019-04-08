@@ -3,9 +3,9 @@ import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { t } from "c-3po";
 import cx from "classnames";
-import Icon from "metabase/components/Icon.jsx";
 
 // components
+import QueryButton from "metabase/components/QueryButton.jsx";
 import Expandable from "metabase/components/Expandable.jsx";
 
 // lib
@@ -69,6 +69,18 @@ export default class TablePane extends Component {
   render() {
     const { table, error } = this.state;
     if (table) {
+      let queryButton;
+      if (table.rows != null) {
+        let text = t`See the raw data for ${table.display_name}`;
+        queryButton = (
+          <QueryButton
+            className="border-bottom border-top mb3"
+            icon="table"
+            text={text}
+            onClick={this.setQueryAllRows}
+          />
+        );
+      }
       let panes = {
         fields: table.fields.length,
         // "metrics": table.metrics.length,
@@ -90,12 +102,6 @@ export default class TablePane extends Component {
 
       let pane;
       let description;
-      const descriptionClasses = cx({ "text-medium": !table.description });
-      description = (
-        <p className={"text-spaced " + descriptionClasses}>
-          {table.description || t`No description set.`}
-        </p>
-      );
       if (this.state.pane === "connections") {
         const fkCountsByTable = foreignKeyCountsByOriginTable(
           this.state.tableForeignKeys,
@@ -109,21 +115,18 @@ export default class TablePane extends Component {
                 ),
               )
               .map((fk, index) => (
-                <li>
-                  <a
-                    key={fk.id}
-                    onClick={() => this.props.show("field", fk.origin)}
-                    className="flex-full flex p1 text-bold text-brand no-decoration bg-medium-hover"
-                  >
-                    {fk.origin.table.display_name}
-                    {fkCountsByTable[fk.origin.table.id] > 1 ? (
-                      <span className="text-medium text-light h5">
-                        {" "}
-                        via {fk.origin.display_name}
-                      </span>
-                    ) : null}
-                  </a>
-                </li>
+                <ListItem
+                  key={fk.id}
+                  onClick={() => this.props.show("field", fk.origin)}
+                >
+                  {fk.origin.table.display_name}
+                  {fkCountsByTable[fk.origin.table.id] > 1 ? (
+                    <span className="text-medium text-light h5">
+                      {" "}
+                      via {fk.origin.display_name}
+                    </span>
+                  ) : null}
+                </ListItem>
               ))}
           </ul>
         );
@@ -132,31 +135,53 @@ export default class TablePane extends Component {
         pane = (
           <ul>
             {table[this.state.pane].map((item, index) => (
-              <li>
-                <a
-                  key={item.id}
-                  onClick={() => this.props.show(itemType, item)}
-                  className="flex-full flex p1 text-bold text-brand no-decoration bg-medium-hover"
-                >
-                  {item.name}
-                </a>
-              </li>
+              <ListItem
+                key={item.id}
+                onClick={() => this.props.show(itemType, item)}
+              >
+                {item.display_name || item.name}
+              </ListItem>
             ))}
           </ul>
+        );
+      } else {
+        const descriptionClasses = cx({ "text-medium": !table.description });
+        description = (
+          <p className={descriptionClasses}>
+            {table.description || t`No description set.`}
+          </p>
         );
       }
 
       return (
         <div>
-          <div className="ml1">
-            <div className="flex align-center">
-              <Icon name="table2" className="text-medium pr1" size={16} />
-              <h3>{table.name}</h3>
-            </div>
-            {description}
-            <div className="my2 Button-group Button-group--brand text-uppercase">
-              {tabs}
-            </div>
+          <h1>{table.display_name}</h1>
+          {description}
+          {queryButton}
+          {table.metrics &&
+            table.metrics.length > 0 && (
+              <ExpandableItemList
+                name="Metrics"
+                type="metrics"
+                show={this.props.show.bind(null, "metric")}
+                items={table.metrics.filter(
+                  metric => metric.archived === false,
+                )}
+              />
+            )}
+          {table.segments &&
+            table.segments.length > 0 && (
+              <ExpandableItemList
+                name="Segments"
+                type="segments"
+                show={this.props.show.bind(null, "segment")}
+                items={table.segments.filter(
+                  segment => segment.archived === false,
+                )}
+              />
+            )}
+          <div className="Button-group Button-group--brand text-uppercase">
+            {tabs}
           </div>
           {pane}
         </div>
@@ -194,7 +219,10 @@ ExpandableItemList.propTypes = {
 
 const ListItem = ({ onClick, children }) => (
   <li className="py1 border-row-divider">
-    <a className="text-brand no-decoration" onClick={onClick}>
+    <a
+      className="text-brand text-brand-darken-hover no-decoration"
+      onClick={onClick}
+    >
       {children}
     </a>
   </li>

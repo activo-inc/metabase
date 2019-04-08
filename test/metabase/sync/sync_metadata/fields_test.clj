@@ -2,7 +2,7 @@
   "Tests for the logic that syncs Field models with the Metadata fetched from a DB. (There are more tests for this
   behavior in the namespace `metabase.sync-database.sync-dynamic-test`, which is sort of a misnomer.)"
   (:require [clojure.java.jdbc :as jdbc]
-            [expectations :refer [expect]]
+            [expectations :refer :all]
             [metabase
              [query-processor :as qp]
              [sync :as sync]
@@ -11,7 +11,6 @@
              [database :refer [Database]]
              [field :refer [Field]]
              [table :refer [Table]]]
-            [metabase.sync.sync-metadata.fields.sync-instances :as sync-fields.sync-instances]
             [metabase.sync.util-test :as sut]
             [metabase.test
              [data :as data]
@@ -19,7 +18,8 @@
             [metabase.test.data.one-off-dbs :as one-off-dbs]
             [toucan
              [db :as db]
-             [hydrate :refer [hydrate]]]))
+             [hydrate :refer [hydrate]]]
+            [toucan.util.test :as tt]))
 
 ;;; +----------------------------------------------------------------------------------------------------------------+
 ;;; |                                         Dropping & Undropping Columns                                          |
@@ -217,7 +217,7 @@
             {new-db-type :database_type} (get-field)]
 
         ;; Syncing again with no change should not call sync-field-instances! or update the hash
-        (tu/throw-if-called sync-fields.sync-instances/sync-instances!
+        (tu/throw-if-called metabase.sync.sync-metadata.fields/sync-field-instances!
           (sync/sync-database! (data/db))
           [old-db-type
            new-db-type
@@ -303,4 +303,4 @@
       [(no-fields-hash before-table-md)
        (no-fields-hash after-table-md)
        (= (:fields-hash before-table-md)
-          (:fields-hash after-table-md))])))
+          (:fields-hash after-table-md))]))  )

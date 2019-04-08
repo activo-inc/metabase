@@ -33,8 +33,6 @@ function legacyScalarSettingsToFormatOptions(settings) {
     .value();
 }
 
-// Scalar visualization shows a single number
-// Multiseries Scalar is transformed to a Funnel
 export default class Scalar extends Component {
   props: VisualizationProps;
 
@@ -43,7 +41,6 @@ export default class Scalar extends Component {
   static iconName = "number";
 
   static noHeader = true;
-  static supportsSeries = true;
 
   static minSize = { width: 3, height: 3 };
 

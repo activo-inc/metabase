@@ -12,7 +12,8 @@
             [metabase.test.data
              [datasets :as datasets]
              [env :as tx.env]
-             [interface :as tx]]))
+             [interface :as tx]]
+            [metabase.util.date :as du]))
 
 ;;; ---------------------------------------------- Helper Fns + Macros -----------------------------------------------
 
@@ -348,3 +349,13 @@
   "Returns truthy if `driver` supports setting a timezone"
   [driver]
   (driver/supports? driver :set-timezone))
+
+(defmacro with-h2-db-timezone
+  "This macro is useful when testing pieces of the query pipeline (such as expand) where it's a basic unit test not
+  involving a database, but does need to parse dates"
+  [& body]
+  `(du/with-effective-timezone {:engine   :h2
+                                :timezone "UTC"
+                                :name     "mock_db"
+                                :id       1}
+    ~@body))

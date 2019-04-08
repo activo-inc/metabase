@@ -1,20 +1,24 @@
 (ns metabase.sync-database.analyze-test
-  "TODO - this namespace follows the old pattern of sync namespaces. Tests should be moved to appropriate new homes at
-  some point"
+  ;; TODO - this namespace follows the old pattern of sync namespaces. Tests should be moved to appropriate new homes
+  ;; at some point
   (:require [clojure.string :as str]
             [expectations :refer :all]
+            [metabase
+             [driver :as driver]
+             [util :as u]]
             [metabase.db.metadata-queries :as metadata-queries]
             [metabase.models
              [database :refer [Database]]
-             [field :as field :refer [Field]]
+             [field :refer [Field] :as field]
              [field-values :as field-values]
              [table :as table :refer [Table]]]
             [metabase.sync.analyze :as analyze]
-            [metabase.sync.analyze.classifiers.text-fingerprint :as classify-text-fingerprint]
             [metabase.sync.analyze.fingerprint.fingerprinters :as fingerprinters]
-            [metabase.test.data :as data]
+            [metabase.sync.analyze.classifiers.text-fingerprint :as classify-text-fingerprint]
+            [metabase.test
+             [data :as data]
+             [util :as tu]]
             [metabase.test.data.users :refer :all]
-            [metabase.util :as u]
             [toucan.db :as db]
             [toucan.util.test :as tt]))
 

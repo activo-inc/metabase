@@ -20,12 +20,12 @@ const SHORTCUTS = [
 ];
 
 const RELATIVE_SHORTCUTS = {
-  [t`Last`]: [
+  Last: [
     { name: t`Week`, operator: "time-interval", values: ["last", "week"] },
     { name: t`Month`, operator: "time-interval", values: ["last", "month"] },
     { name: t`Year`, operator: "time-interval", values: ["last", "year"] },
   ],
-  [t`This`]: [
+  This: [
     { name: t`Week`, operator: "time-interval", values: ["current", "week"] },
     { name: t`Month`, operator: "time-interval", values: ["current", "month"] },
     { name: t`Year`, operator: "time-interval", values: ["current", "year"] },

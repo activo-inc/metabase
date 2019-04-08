@@ -41,7 +41,6 @@ type Props = {
   filter?: Filter,
   onCommitFilter: (filter: Filter) => void,
   onClose: () => void,
-  showFieldPicker?: boolean,
 };
 
 type State = {
@@ -51,10 +50,6 @@ type State = {
 export default class FilterPopover extends Component {
   props: Props;
   state: State;
-
-  static defaultProps = {
-    showFieldPicker: true,
-  };
 
   constructor(props: Props) {
     super(props);
@@ -306,7 +301,7 @@ export default class FilterPopover extends Component {
   };
 
   render() {
-    const { query, showFieldPicker } = this.props;
+    const { query } = this.props;
     const { filter } = this.state;
     const [operatorName, fieldRef] = filter;
 
@@ -319,7 +314,7 @@ export default class FilterPopover extends Component {
             field={fieldRef}
             fieldOptions={query.filterFieldOptions(filter)}
             segmentOptions={query.filterSegmentOptions(filter)}
-            table={query.table()}
+            tableMetadata={query.table()}
             onFieldChange={this.setField}
             onFilterChange={this.commitFilter}
           />
@@ -328,10 +323,6 @@ export default class FilterPopover extends Component {
     } else {
       let { table, field } = query.table().fieldTarget(fieldRef);
       const dimension = query.parseFieldReference(fieldRef);
-
-      const showOperatorSelector = !(isTime(field) || isDate(field));
-      const showHeader = showFieldPicker || showOperatorSelector;
-
       return (
         <div
           style={{
@@ -340,33 +331,28 @@ export default class FilterPopover extends Component {
             maxWidth: dimension.field().isDate() ? null : 500,
           }}
         >
-          {showHeader && (
-            <div className="FilterPopover-header border-bottom text-medium p1 flex align-center">
-              {showFieldPicker && (
-                <div className="flex py1">
-                  <span
-                    className="cursor-pointer text-purple-hover transition-color flex align-center"
-                    onClick={this.clearField}
-                  >
-                    <Icon name="chevronleft" size={16} />
-                    <h3 className="ml1">{singularize(table.display_name)}</h3>
-                  </span>
-                  <h3 className="mx1">-</h3>
-                  <h3 className="text-default">{formatField(field)}</h3>
-                </div>
-              )}
-              {showOperatorSelector && (
+          <div className="FilterPopover-header border-bottom text-medium p1 flex align-center">
+            <div className="flex py1">
+              <a
+                className="cursor-pointer text-purple-hover transition-color flex align-center"
+                onClick={this.clearField}
+              >
+                <Icon name="chevronleft" size={16} />
+                <h3 className="ml1">{singularize(table.display_name)}</h3>
+              </a>
+              <h3 className="mx1">-</h3>
+              <h3 className="text-default">{formatField(field)}</h3>
+            </div>
+            {isTime(field) || isDate(field) ? null : (
+              <div className="flex flex-align-right pl3">
                 <OperatorSelector
-                  className={
-                    showFieldPicker ? "flex-align-right pl2" : "flex-full p1"
-                  }
                   operator={operatorName}
                   operators={field.operators}
                   onOperatorChange={this.setOperator}
                 />
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
           {isTime(field) ? (
             <TimePicker
               className="mt1 border-top"

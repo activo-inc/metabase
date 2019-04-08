@@ -11,13 +11,9 @@
              [execute :as sql-jdbc.execute]
              [sync :as sql-jdbc.sync]]
             [metabase.driver.sql.query-processor :as sql.qp]
-            [metabase.driver.sql.util.unprepare :as unprepare]
             [metabase.util
              [date :as du]
-             [honeysql-extensions :as hx]
-             [i18n :refer [trs]]])
-  (:import java.sql.Time
-           java.util.Date))
+             [honeysql-extensions :as hx]]))
 
 (driver/register! :vertica, :parent :sql-jdbc)
 
@@ -68,7 +64,7 @@
 
 (def ^:private extract-integer (comp hx/->integer extract))
 
-(def ^:private one-day (hsql/raw "INTERVAL '1 day'"))
+(def ^:private ^:const one-day (hsql/raw "INTERVAL '1 day'"))
 
 (defmethod sql.qp/date [:vertica :default]         [_ _ expr] expr)
 (defmethod sql.qp/date [:vertica :minute]          [_ _ expr] (date-trunc :minute expr))
@@ -101,7 +97,7 @@
   (try (set (jdbc/query (sql-jdbc.conn/db->pooled-connection-spec database)
                         ["SELECT TABLE_SCHEMA AS \"schema\", TABLE_NAME AS \"name\" FROM V_CATALOG.VIEWS;"]))
        (catch Throwable e
-         (log/error e (trs "Failed to fetch materialized views for this database")))))
+         (log/error "Failed to fetch materialized views for this database:" (.getMessage e)))))
 
 (defmethod driver/describe-database :vertica [driver database]
   (-> ((get-method driver/describe-database :sql-jdbc) driver database)
@@ -117,8 +113,3 @@
   (apply driver.common/current-db-time args))
 
 (defmethod sql-jdbc.execute/set-timezone-sql :vertica [_] "SET TIME ZONE TO %s;")
-
-(defmethod unprepare/unprepare-value [:vertica Date] [_ value]
-  (format "timestamp '%s'" (du/date->iso-8601 value)))
-
-(prefer-method unprepare/unprepare-value [:sql Time] [:vertica Date])

@@ -2,23 +2,22 @@
   (:require [metabase.mbql
              [schema :as mbql.s]
              [util :as mbql.u]]
-            [metabase.util :as u]
             [schema.core :as s]))
 
 (defn- desugar-inside [query]
-  (mbql.u/replace query
+  (mbql.u/replace-in query [:query :filter]
     [:inside lat-field lon-field lat-max lon-min lat-min lon-max]
     [:and
      [:between lat-field lat-min lat-max]
      [:between lon-field lon-min lon-max]]))
 
 (defn- desugar-is-null-and-not-null [query]
-  (mbql.u/replace query
+  (mbql.u/replace-in query [:query :filter]
     [:is-null field]  [:=  field nil]
     [:not-null field] [:!= field nil]))
 
 (defn- desugar-time-interval [query]
-  (mbql.u/replace query
+  (mbql.u/replace-in query [:query :filter]
     [:time-interval field n unit] (recur [:time-interval field n unit nil])
 
     ;; replace current/last/next with corresponding value of n and recur
@@ -48,8 +47,7 @@
     [:between [:datetime-field field unit] [:relative-datetime 1 unit] [:relative-datetime n unit]]))
 
 (defn- desugar-does-not-contain [query]
-  (mbql.u/replace query
-    [:does-not-contain & args]
+  (mbql.u/replace-in query [:query :filter] [:does-not-contain & args]
     [:not (vec (cons :contains args))]))
 
 (defn- desugar-equals-and-not-equals-with-extra-args
@@ -58,7 +56,7 @@
      [:= field x y]  -> [:or  [:=  field x] [:=  field y]]
      [:!= field x y] -> [:and [:!= field x] [:!= field y]]"
   [query]
-  (mbql.u/replace query
+  (mbql.u/replace-in query [:query :filter]
     [:= field x y & more]
     (apply vector :or (for [x (concat [x y] more)]
                         [:= field x]))
@@ -72,20 +70,24 @@
   `<unit>` is inferred from the `:datetime-field` the clause is being compared to (if any), otherwise falls back to
   `default.`"
   [query]
-  (mbql.u/replace query
+  (mbql.u/replace-in query [:query :filter]
     [clause field [:relative-datetime :current & _]]
     [clause field [:relative-datetime 0 (or (mbql.u/match-one field [:datetime-field _ unit] unit)
                                             :default)]]))
 
+
 (s/defn ^:private desugar* :- mbql.s/Query
-  [query]
-  (u/update-when query :query (comp mbql.u/simplify-compound-filter
-                                    desugar-inside
-                                    desugar-is-null-and-not-null
-                                    desugar-time-interval
-                                    desugar-does-not-contain
-                                    desugar-equals-and-not-equals-with-extra-args
-                                    desugar-current-relative-datetime)))
+  [{{filter-clause :filter} :query, :as query}]
+  (if-not (seq filter-clause)
+    query
+    (-> query
+        desugar-inside
+        desugar-is-null-and-not-null
+        desugar-time-interval
+        desugar-does-not-contain
+        desugar-equals-and-not-equals-with-extra-args
+        desugar-current-relative-datetime
+        (update-in [:query :filter] mbql.u/simplify-compound-filter))))
 
 (defn desugar
   "Middleware that replaces high-level 'syntactic sugar' clauses with lower-level clauses. This is done to minimize the

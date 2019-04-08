@@ -2,7 +2,7 @@
   (:require [expectations :refer :all]
             [metabase.models
              [card :refer [Card]]
-             [revision :as revision :refer :all]]
+             [revision :refer :all :as revision]]
             [metabase.test.data.users :refer :all]
             [metabase.util :as u]
             [toucan.models :as models]

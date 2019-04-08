@@ -1,8 +1,7 @@
 /* @flow */
 import React from "react";
-
-import Collection from "metabase/entities/collections";
-import Search from "metabase/entities/search";
+import EntityObjectLoader from "metabase/entities/containers/EntityObjectLoader";
+import EntityListLoader from "metabase/entities/containers/EntityListLoader";
 
 type Props = {
   collectionId: number,
@@ -10,13 +9,15 @@ type Props = {
 };
 
 const CollectionItemsLoader = ({ collectionId, children, ...props }: Props) => (
-  <Collection.Loader
+  <EntityObjectLoader
     {...props}
-    id={collectionId}
+    entityType="collections"
+    entityId={collectionId}
     children={({ object }) => (
-      <Search.ListLoader
+      <EntityListLoader
         {...props}
-        query={{ collection: collectionId }}
+        entityType="search"
+        entityQuery={{ collection: collectionId }}
         wrapped
         children={({ list }) =>
           object &&

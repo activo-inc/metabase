@@ -4,7 +4,7 @@ import { push } from "react-router-redux";
 import { connect } from "react-redux";
 import Modal from "metabase/components/Modal";
 
-const ModalWithRoute = (ComposedModal, modalProps = {}) =>
+const ModalWithRoute = ComposedModal =>
   connect(null, { onChangeLocation: push })(
     class extends Component {
       static displayName = `ModalWithRoute[${ComposedModal.displayName ||
@@ -21,7 +21,7 @@ const ModalWithRoute = (ComposedModal, modalProps = {}) =>
 
       render() {
         return (
-          <Modal {...modalProps} onClose={this.onClose}>
+          <Modal onClose={this.onClose}>
             <ComposedModal {...this.props} onClose={this.onClose} />
           </Modal>
         );
@@ -32,11 +32,11 @@ const ModalWithRoute = (ComposedModal, modalProps = {}) =>
 // react-router Route wrapper that handles routed modals
 export class ModalRoute extends Route {
   static createRouteFromReactElement(element) {
-    const { modal, modalProps } = element.props;
+    const { modal } = element.props;
 
     if (modal) {
       element = React.cloneElement(element, {
-        component: ModalWithRoute(modal, modalProps),
+        component: ModalWithRoute(modal),
       });
 
       return Route.createRouteFromReactElement(element);

@@ -1,7 +1,6 @@
 (ns metabase.api.dataset
   "/api/dataset endpoints."
   (:require [cheshire.core :as json]
-            [clojure.core.async :as a]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [compojure.core :refer [POST]]
@@ -11,17 +10,13 @@
              [database :as database :refer [Database]]
              [query :as query]]
             [metabase.query-processor :as qp]
-            [metabase.query-processor
-             [async :as qp.async]
-             [util :as qputil]]
+            [metabase.query-processor.util :as qputil]
             [metabase.util
              [date :as du]
              [export :as ex]
              [i18n :refer [trs tru]]
              [schema :as su]]
-            [schema.core :as s])
-  (:import clojure.core.async.impl.channels.ManyToManyChannel))
-
+            [schema.core :as s]))
 
 ;;; -------------------------------------------- Running a Query Normally --------------------------------------------
 
@@ -44,10 +39,13 @@
   (when-not (= database database/virtual-id)
     (api/read-check Database database))
   ;; add sensible constraints for results limits on our query
-  (let [source-card-id (query->source-card-id query)
-        options        {:executed-by api/*current-user-id*, :context :ad-hoc,
-                        :card-id     source-card-id,        :nested? (boolean source-card-id)}]
-    (qp.async/process-query-and-save-with-max! query options)))
+  (let [source-card-id (query->source-card-id query)]
+    (api/cancelable-json-response
+     (fn []
+       (qp/process-query-and-save-with-max!
+           query
+           {:executed-by api/*current-user-id*, :context :ad-hoc,
+            :card-id     source-card-id,        :nested? (boolean source-card-id)})))))
 
 
 ;;; ----------------------------------- Downloading Query Results in Other Formats -----------------------------------
@@ -97,8 +95,8 @@
       (map (comp (swap-date-columns date-indexes) vec) rows)
       rows)))
 
-(defn- as-format-response
-  "Return a response containing the `results` of a query in the specified format."
+(defn as-format
+  "Return a response containing the RESULTS of a query in the specified format."
   {:style/indent 1, :arglists '([export-format results])}
   [export-format {{:keys [columns rows cols]} :data, :keys [status], :as response}]
   (api/let-404 [export-conf (ex/export-formats export-format)]
@@ -112,23 +110,6 @@
       {:status 500
        :body   (:error response)})))
 
-(s/defn as-format-async
-  "Write the results of an async query to API `respond` or `raise` functions in `export-format`. `in-chan` should be a
-  core.async channel that can be used to fetch the results of the query."
-  {:style/indent 3}
-  [export-format :- ExportFormat, respond :- (s/pred fn?), raise :- (s/pred fn?), in-chan :- ManyToManyChannel]
-  (a/go
-    (try
-      (let [results (a/<! in-chan)]
-        (if (instance? Throwable results)
-          (raise results)
-          (respond (as-format-response export-format results))))
-      (catch Throwable e
-        (raise e))
-      (finally
-        (a/close! in-chan))))
-  nil)
-
 (def export-format-regex
   "Regex for matching valid export formats (e.g., `json`) for queries.
    Inteneded for use in an endpoint definition:
@@ -136,20 +117,19 @@
      (api/defendpoint POST [\"/:export-format\", :export-format export-format-regex]"
   (re-pattern (str "(" (str/join "|" (keys ex/export-formats)) ")")))
 
-(api/defendpoint-async POST ["/:export-format", :export-format export-format-regex]
+(api/defendpoint POST ["/:export-format", :export-format export-format-regex]
   "Execute a query and download the result data as a file in the specified format."
-  [{{:keys [export-format query]} :params} respond raise]
+  [export-format query]
   {query         su/JSONString
    export-format ExportFormat}
   (let [{:keys [database] :as query} (json/parse-string query keyword)]
     (when-not (= database database/virtual-id)
       (api/read-check Database database))
-    (as-format-async export-format respond raise
-      (qp.async/process-query-and-save-execution!
-       (-> query
-           (dissoc :constraints)
-           (assoc-in [:middleware :skip-results-metadata?] true))
-       {:executed-by api/*current-user-id*, :context (export-format->context export-format)}))))
+    (as-format export-format
+      (qp/process-query-and-save-execution! (-> query
+                                                (dissoc :constraints)
+                                                (assoc-in [:middleware :skip-results-metadata?] true))
+        {:executed-by api/*current-user-id*, :context (export-format->context export-format)}))))
 
 
 ;;; ------------------------------------------------ Other Endpoints -------------------------------------------------
@@ -161,11 +141,8 @@
   (api/read-check Database database)
   ;; try calculating the average for the query as it was given to us, otherwise with the default constraints if
   ;; there's no data there. If we still can't find relevant info, just default to 0
-  {:average (or
-             (some (comp query/average-execution-time-ms qputil/query-hash)
-                   [query
-                    (assoc query :constraints qp/default-query-constraints)])
-             0)})
-
+  {:average (or (query/average-execution-time-ms (qputil/query-hash query))
+                (query/average-execution-time-ms (qputil/query-hash (assoc query :constraints qp/default-query-constraints)))
+                0)})
 
 (api/define-routes)

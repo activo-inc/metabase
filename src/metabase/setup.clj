@@ -1,5 +1,5 @@
 (ns metabase.setup
-  (:require [metabase.models.setting :refer [defsetting Setting]]
+  (:require [metabase.models.setting :refer [Setting defsetting]]
             [toucan.db :as db]))
 
 (defsetting ^:private setup-token

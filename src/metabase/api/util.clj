@@ -19,7 +19,7 @@
   "Logs."
   []
   (api/check-superuser)
-  (logger/messages))
+  (logger/get-messages))
 
 (api/defendpoint GET "/stats"
   "Anonymous usage stats. Endpoint for testing, and eventually exposing this to instance admins to let them see

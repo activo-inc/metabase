@@ -7,9 +7,8 @@
              [public-settings :as public-settings]
              [util :as u]]
             [metabase.api.common :as api :refer [*current-user-id*]]
-            [metabase.mbql
-             [normalize :as normalize]
-             [util :as mbql.u]]
+            [metabase.api.common :as api :refer [*current-user-id* *current-user-permissions-set*]]
+            [metabase.mbql.util :as mbql.u]
             [metabase.models
              [dependency :as dependency]
              [field-values :as field-values]
@@ -23,7 +22,8 @@
             [metabase.util.i18n :as ui18n :refer [tru]]
             [toucan
              [db :as db]
-             [models :as models]]))
+             [models :as models]]
+            [metabase.mbql.normalize :as normalize]))
 
 (models/defmodel Card :report_card)
 

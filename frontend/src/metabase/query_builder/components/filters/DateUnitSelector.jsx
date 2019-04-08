@@ -1,7 +1,7 @@
 import React from "react";
 
 import Select, { Option } from "metabase/components/Select";
-import { formatBucketing } from "metabase/lib/query_time";
+import { pluralize, capitalize } from "humanize-plus";
 
 type DateUnitSelectorProps = {
   value: RelativeDatetimeUnit,
@@ -30,7 +30,7 @@ const DateUnitSelector = ({
   >
     {periods.map(period => (
       <Option value={period} key={period}>
-        {formatBucketing(period, formatter(intervals) || 1)}
+        {capitalize(pluralize(formatter(intervals) || 1, period))}
       </Option>
     ))}
   </Select>

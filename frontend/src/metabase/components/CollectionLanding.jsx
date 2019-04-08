@@ -9,9 +9,6 @@ import { dissoc } from "icepick";
 
 import withToast from "metabase/hoc/Toast";
 
-import Collection from "metabase/entities/collections";
-import Search from "metabase/entities/search";
-
 import listSelect from "metabase/hoc/ListSelect";
 import BulkActionBar from "metabase/components/BulkActionBar";
 
@@ -31,11 +28,12 @@ import VirtualizedList from "metabase/components/VirtualizedList";
 import BrowserCrumbs from "metabase/components/BrowserCrumbs";
 import ItemTypeFilterBar from "metabase/components/ItemTypeFilterBar";
 import CollectionEmptyState from "metabase/components/CollectionEmptyState";
-import PageHeading from "metabase/components/PageHeading";
+
 import Tooltip from "metabase/components/Tooltip";
 
 import CollectionMoveModal from "metabase/containers/CollectionMoveModal";
 import EntityCopyModal from "metabase/entities/containers/EntityCopyModal";
+import { entityObjectLoader } from "metabase/entities/containers/EntityObjectLoader";
 import { entityTypeForObject } from "metabase/schema";
 
 import CollectionList from "metabase/components/CollectionList";
@@ -95,8 +93,11 @@ const EMPTY_STATES = {
   card: <QuestionEmptyState />,
 };
 
-@Search.loadList({
-  query: (state, props) => ({ collection: props.collectionId }),
+import { entityListLoader } from "metabase/entities/containers/EntityListLoader";
+
+@entityListLoader({
+  entityType: "search",
+  entityQuery: (state, props) => ({ collection: props.collectionId }),
   wrapped: true,
 })
 @connect((state, props) => {
@@ -152,7 +153,7 @@ class DefaultLanding extends React.Component {
       await Promise.all(
         this.state.selectedItems.map(item => item.setCollection(collection)),
       );
-      this.handleCloseModal();
+      this.setState({ selectedItems: null, selectedAction: null });
     } finally {
       this.handleBulkActionSuccess();
     }
@@ -163,10 +164,6 @@ class DefaultLanding extends React.Component {
     // Fixes an issue where things were staying selected when moving between
     // different collection pages
     this.props.onSelectNone();
-  };
-
-  handleCloseModal = () => {
-    this.setState({ selectedItems: null, selectedAction: null });
   };
 
   render() {
@@ -236,7 +233,7 @@ class DefaultLanding extends React.Component {
                 />
               </Box>
               <Flex align="center">
-                <PageHeading>{collection.name}</PageHeading>
+                <h1 style={{ fontWeight: 900 }}>{collection.name}</h1>
                 {collection.description && (
                   <Tooltip tooltip={collection.description}>
                     <Icon
@@ -502,12 +499,14 @@ class DefaultLanding extends React.Component {
         </Box>
         {!_.isEmpty(selectedItems) &&
           selectedAction == "copy" && (
-            <Modal onClose={this.handleCloseModal}>
+            <Modal>
               <CollectionCopyEntityModal
                 entityObject={selectedItems[0]}
-                onClose={this.handleCloseModal}
+                onClose={() =>
+                  this.setState({ selectedItems: null, selectedAction: null })
+                }
                 onSaved={newEntityObject => {
-                  this.handleCloseModal();
+                  this.setState({ selectedItems: null, selectedAction: null });
                   this.handleBulkActionSuccess();
                 }}
               />
@@ -515,14 +514,16 @@ class DefaultLanding extends React.Component {
           )}
         {!_.isEmpty(selectedItems) &&
           selectedAction == "move" && (
-            <Modal onClose={this.handleCloseModal}>
+            <Modal>
               <CollectionMoveModal
                 title={
                   selectedItems.length > 1
                     ? t`Move ${selectedItems.length} items?`
                     : t`Move "${selectedItems[0].getName()}"?`
                 }
-                onClose={this.handleCloseModal}
+                onClose={() =>
+                  this.setState({ selectedItems: null, selectedAction: null })
+                }
                 onMove={this.handleBulkMove}
               />
             </Modal>
@@ -647,8 +648,9 @@ const SelectionControls = ({
     <StackedCheckBox checked indeterminate onChange={onSelectAll} size={size} />
   );
 
-@Collection.load({
-  id: (state, props) => props.params.collectionId,
+@entityObjectLoader({
+  entityType: "collections",
+  entityId: (state, props) => props.params.collectionId,
   reload: true,
 })
 class CollectionLanding extends React.Component {

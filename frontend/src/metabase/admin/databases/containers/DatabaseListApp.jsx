@@ -16,13 +16,14 @@ import FormMessage from "metabase/components/form/FormMessage";
 import CreatedDatabaseModal from "../components/CreatedDatabaseModal.jsx";
 import DeleteDatabaseModal from "../components/DeleteDatabaseModal.jsx";
 
-import Database from "metabase/entities/databases";
+import Databases from "metabase/entities/databases";
+import { entityListLoader } from "metabase/entities/containers/EntityListLoader";
 
 import { getDeletes, getDeletionError } from "../selectors";
 import { deleteDatabase, addSampleDataset } from "../database";
 
 const mapStateToProps = (state, props) => ({
-  hasSampleDataset: Database.selectors.getHasSampleDataset(state),
+  hasSampleDataset: Databases.selectors.getHasSampleDataset(state),
 
   created: props.location.query.created,
   engines: MetabaseSettings.get("engines"),
@@ -32,13 +33,14 @@ const mapStateToProps = (state, props) => ({
 });
 
 const mapDispatchToProps = {
+  fetchDatabases: Databases.actions.fetchList,
   // NOTE: still uses deleteDatabase from metabaseadmin/databases/databases.js
   // rather than metabase/entities/databases since it updates deletes/deletionError
   deleteDatabase: deleteDatabase,
   addSampleDataset: addSampleDataset,
 };
 
-@Database.loadList()
+@entityListLoader({ entityType: "databases" })
 @connect(mapStateToProps, mapDispatchToProps)
 export default class DatabaseList extends Component {
   static propTypes = {

@@ -69,7 +69,8 @@
     (-> metadata
         serialize-metadata-for-hashing
         hash/md5
-        codec/base64-encode)))
+        codec/base64-encode
+        encryption/maybe-encrypt)))
 
 (defn valid-checksum?
   "Is the CHECKSUM the right one for this column METADATA?"

@@ -23,9 +23,8 @@
 
 (defn- cannot-be-category-or-list?
   [{:keys [base_type special_type]}]
-  (or (isa? base_type :type/DateTime)
-      (isa? base_type :type/Collection)
-      (isa? base_type :type/Float)
+  (or (isa? base_type    :type/DateTime)
+      (isa? base_type    :type/Collection)
       ;; Don't let IDs become list Fields (they already can't become categories, because they already have a special
       ;; type). It just doesn't make sense to cache a sequence of numbers since they aren't inherently meaningful
       (isa? special_type :type/PK)

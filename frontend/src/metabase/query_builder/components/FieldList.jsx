@@ -14,7 +14,6 @@ import Dimension, { BinnedDimension } from "metabase-lib/lib/Dimension";
 
 import type { ConcreteField } from "metabase/meta/types/Query";
 import type Table from "metabase-lib/lib/metadata/Table";
-import type { RenderItemWrapper } from "metabase/components/AccordianList.jsx";
 
 // import type { Section } from "metabase/components/AccordianList";
 export type AccordianListItem = {};
@@ -27,7 +26,6 @@ export type AccordianListSection = {
 type Props = {
   className?: string,
   maxHeight?: number,
-  width?: number,
 
   field: ?ConcreteField,
   onFieldChange: (field: ConcreteField) => void,
@@ -35,15 +33,13 @@ type Props = {
   // HACK: for segments
   onFilterChange?: (filter: any) => void,
 
-  table: Table,
+  tableMetadata: Table,
 
   alwaysExpanded?: boolean,
   enableSubDimensions?: boolean,
   useOriginalDimension?: boolean,
 
   hideSectionHeader?: boolean,
-
-  renderItemWrapper?: RenderItemWrapper,
 };
 
 type State = {
@@ -61,8 +57,13 @@ export default class FieldList extends Component {
   }
 
   componentWillReceiveProps(newProps) {
-    let { table, fieldOptions, segmentOptions, hideSectionHeader } = newProps;
-    let tableName = table.display_name;
+    let {
+      tableMetadata,
+      fieldOptions,
+      segmentOptions,
+      hideSectionHeader,
+    } = newProps;
+    let tableName = tableMetadata.display_name;
 
     let specialOptions = [];
     if (segmentOptions) {
@@ -105,7 +106,11 @@ export default class FieldList extends Component {
   };
 
   renderItemExtra = item => {
-    const { field, enableSubDimensions, table: { metadata } } = this.props;
+    const {
+      field,
+      enableSubDimensions,
+      tableMetadata: { metadata },
+    } = this.props;
 
     return (
       <div className="Field-extra flex align-center">
@@ -158,7 +163,7 @@ export default class FieldList extends Component {
   };
 
   renderSubDimensionTrigger(dimension) {
-    const { field, table: { metadata } } = this.props;
+    const { field, tableMetadata: { metadata } } = this.props;
     const subDimension = dimension.isSameBaseDimension(field)
       ? Dimension.parseMBQL(field, metadata)
       : dimension.defaultDimension();
@@ -172,11 +177,16 @@ export default class FieldList extends Component {
   }
 
   renderSegmentTooltip(segment) {
-    let { table } = this.props;
+    let { tableMetadata } = this.props;
     return (
       <div className="p1">
         <Tooltip
-          tooltip={<QueryDefinitionTooltip object={segment} table={table} />}
+          tooltip={
+            <QueryDefinitionTooltip
+              object={segment}
+              tableMetadata={tableMetadata}
+            />
+          }
         >
           <span className="QuestionTooltipTarget" />
         </Tooltip>
@@ -238,14 +248,12 @@ export default class FieldList extends Component {
       <AccordianList
         className={this.props.className}
         maxHeight={this.props.maxHeight}
-        width={this.props.width}
         sections={this.state.sections}
         onChange={this.onChange}
         itemIsSelected={this.itemIsSelected}
         renderSectionIcon={this.renderSectionIcon}
         renderItemExtra={this.renderItemExtra}
         renderItemIcon={this.renderItemIcon}
-        renderItemWrapper={this.props.renderItemWrapper}
         getItemClasses={this.getItemClasses}
         alwaysExpanded={this.props.alwaysExpanded}
       />
@@ -256,14 +264,13 @@ export default class FieldList extends Component {
 import cx from "classnames";
 
 export const DimensionPicker = ({
-  style,
   className,
   dimension,
   dimensions,
   onChangeDimension,
 }) => {
   return (
-    <ul className={cx(className, "px2 py1")} style={style}>
+    <ul className="px2 py1">
       {dimensions.map((d, index) => (
         <li
           key={index}

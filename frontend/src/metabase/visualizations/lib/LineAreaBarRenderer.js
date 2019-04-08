@@ -61,7 +61,7 @@ import { isStructured } from "metabase/meta/Card";
 import {
   updateDateTimeFilter,
   updateNumericFilter,
-} from "metabase/modes/lib/actions";
+} from "metabase/qb/lib/actions";
 
 import { lineAddons } from "./graph/addons";
 import { initBrush } from "./graph/brush";

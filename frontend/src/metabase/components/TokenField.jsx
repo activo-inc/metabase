@@ -5,6 +5,7 @@ import PropTypes from "prop-types";
 import { findDOMNode } from "react-dom";
 import _ from "underscore";
 import cx from "classnames";
+import cxs from "cxs";
 
 import OnClickOutsideWrapper from "metabase/components/OnClickOutsideWrapper";
 import Icon from "metabase/components/Icon";
@@ -21,9 +22,9 @@ import {
 } from "metabase/lib/keyboard";
 import { isObscured } from "metabase/lib/dom";
 
-const inputBoxStyles = {
+const inputBoxClasses = cxs({
   maxHeight: 130,
-};
+});
 
 type Value = any;
 type Option = any;
@@ -548,8 +549,11 @@ export default class TokenField extends Component {
 
     const valuesList = (
       <ul
-        className="border-bottom p1 pb2 flex flex-wrap bg-white scroll-x scroll-y"
-        style={{ ...this.props.style, inputBoxStyles }}
+        className={cx(
+          "border-bottom p1 pb2 flex flex-wrap bg-white scroll-x scroll-y",
+          inputBoxClasses,
+        )}
+        style={this.props.style}
         onMouseDownCapture={this.onMouseDownCapture}
       >
         {value.map((v, index) => (

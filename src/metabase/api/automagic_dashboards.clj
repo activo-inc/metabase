@@ -1,11 +1,11 @@
 (ns metabase.api.automagic-dashboards
   (:require [buddy.core.codecs :as codecs]
             [cheshire.core :as json]
-            [compojure.core :refer [GET]]
+            [compojure.core :refer [GET POST]]
             [metabase.api.common :as api]
             [metabase.automagic-dashboards
              [comparison :refer [comparison-dashboard]]
-             [core :refer [automagic-analysis candidate-tables]]
+             [core :refer [candidate-tables automagic-analysis]]
              [rules :as rules]]
             [metabase.models
              [card :refer [Card]]

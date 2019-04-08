@@ -6,9 +6,7 @@
              [query-processor :as qp]
              [util :as u]]
             [metabase.api.common :as api]
-            [metabase.mbql
-             [normalize :as normalize]
-             [util :as mbql.u]]
+            [metabase.mbql.util :as mbql.u]
             [metabase.util
              [i18n :refer [tru]]
              [schema :as su]])
@@ -135,7 +133,7 @@
         y             (Integer/parseInt y)
         lat-col-idx   (Integer/parseInt lat-col-idx)
         lon-col-idx   (Integer/parseInt lon-col-idx)
-        query         (normalize/normalize (json/parse-string query keyword))
+        query         (json/parse-string query keyword)
         updated-query (update query :query (u/rpartial query-with-inside-filter lat-field-id lon-field-id x y zoom))
         result        (qp/process-query-and-save-execution! updated-query {:executed-by api/*current-user-id*, :context :map-tiles})
         points        (for [row (-> result :data :rows)]

@@ -4,6 +4,8 @@
              [field :refer [Field]]
              [table :as table :refer [Table]]]
             [metabase.sync.analyze.classifiers.name :refer :all]
+            [metabase.test.data :as data]
+            [metabase.util :as u]
             [toucan.util.test :as tt]))
 
 ;; Postfix + pluralization

@@ -3,14 +3,15 @@ import _ from "underscore";
 import { Box, Flex } from "grid-styled";
 import { connect } from "react-redux";
 import { t, jt } from "c-3po";
-import { createSelector } from "reselect";
 
 import CollectionItemsLoader from "metabase/containers/CollectionItemsLoader";
 import CandidateListLoader from "metabase/containers/CandidateListLoader";
+import { DatabaseListLoader } from "metabase/components/BrowseApp";
 import ExplorePane from "metabase/components/ExplorePane";
 import Tooltip from "metabase/components/Tooltip.jsx";
-import MetabotLogo from "metabase/components/MetabotLogo";
-import CollectionList from "metabase/components/CollectionList";
+
+import * as Urls from "metabase/lib/urls";
+import colors, { normal } from "metabase/lib/colors";
 
 import Card from "metabase/components/Card";
 import { Grid, GridItem } from "metabase/components/Grid";
@@ -19,18 +20,21 @@ import Link from "metabase/components/Link";
 import Subhead from "metabase/components/Subhead";
 import RetinaImage from "react-retina-image";
 
-import * as Urls from "metabase/lib/urls";
-import colors, { normal } from "metabase/lib/colors";
-import Greeting from "metabase/lib/greeting";
+import { getUser } from "metabase/home/selectors";
 
-import Database from "metabase/entities/databases";
-import Search from "metabase/entities/search";
+import CollectionList from "metabase/components/CollectionList";
+
 import { ROOT_COLLECTION } from "metabase/entities/collections";
 
-import { getUser } from "metabase/home/selectors";
-import { getXraysEnabled } from "metabase/selectors/settings";
+import MetabotLogo from "metabase/components/MetabotLogo";
+import Greeting from "metabase/lib/greeting";
+
+import { entityListLoader } from "metabase/entities/containers/EntityListLoader";
 
 const PAGE_PADDING = [1, 2, 4];
+
+import { createSelector } from "reselect";
+import { getXraysEnabled } from "metabase/selectors/settings";
 
 // use reselect select to avoid re-render if list doesn't change
 const getParitionedCollections = createSelector(
@@ -56,8 +60,9 @@ const getParitionedCollections = createSelector(
 );
 
 //class Overworld extends Zelda
-@Search.loadList({
-  query: { collection: "root" },
+@entityListLoader({
+  entityType: "search",
+  entityQuery: { collection: "root" },
   wrapped: true,
 })
 @connect((state, props) => ({
@@ -209,7 +214,7 @@ class Overworld extends React.Component {
           </Box>
         </Box>
 
-        <Database.ListLoader>
+        <DatabaseListLoader>
           {({ databases }) => {
             if (databases.length === 0) {
               return null;
@@ -265,7 +270,7 @@ class Overworld extends React.Component {
               </Box>
             );
           }}
-        </Database.ListLoader>
+        </DatabaseListLoader>
       </Box>
     );
   }

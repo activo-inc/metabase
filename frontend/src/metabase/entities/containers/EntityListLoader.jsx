@@ -27,15 +27,6 @@ export type RenderProps = {
   reload: () => void,
 };
 
-// props that shouldn't be passed to children in order to properly stack
-const CONSUMED_PROPS: string[] = [
-  "entityType",
-  "entityQuery",
-  // "reload", // Masked by `reload` function. Should we rename that?
-  "wrapped",
-  "loadingAndErrorWrapper",
-];
-
 const getEntityQuery = (state, props) =>
   typeof props.entityQuery === "function"
     ? props.entityQuery(state, props)
@@ -53,16 +44,7 @@ const getMemoizedEntityQuery = createMemoizedSelector(
 @entityType()
 @paginationState()
 @connect((state, props) => {
-  let {
-    entityDef,
-    entityQuery,
-    page,
-    pageSize,
-    allLoading,
-    allLoaded,
-    allFetched,
-    allError,
-  } = props;
+  let { entityDef, entityQuery, page, pageSize } = props;
   if (typeof entityQuery === "function") {
     entityQuery = entityQuery(state, props);
   }
@@ -70,24 +52,13 @@ const getMemoizedEntityQuery = createMemoizedSelector(
     entityQuery = { limit: pageSize, offset: pageSize * page, ...entityQuery };
   }
   entityQuery = getMemoizedEntityQuery(state, { entityQuery });
-
-  const loading = entityDef.selectors.getLoading(state, { entityQuery });
-  const loaded = entityDef.selectors.getLoaded(state, { entityQuery });
-  const fetched = entityDef.selectors.getFetched(state, { entityQuery });
-  const error = entityDef.selectors.getError(state, { entityQuery });
-
   return {
     entityQuery,
     list: entityDef.selectors.getList(state, { entityQuery }),
-    loading,
-    loaded,
-    fetched,
-    error,
-    // merge props passed in from stacked Entity*Loaders:
-    allLoading: loading || (allLoading == null ? false : allLoading),
-    allLoaded: loaded && (allLoaded == null ? true : allLoaded),
-    allFetched: fetched && (allFetched == null ? true : allFetched),
-    allError: error || (allError == null ? null : allError),
+    fetched: entityDef.selectors.getFetched(state, { entityQuery }),
+    loaded: entityDef.selectors.getLoaded(state, { entityQuery }),
+    loading: entityDef.selectors.getLoading(state, { entityQuery }),
+    error: entityDef.selectors.getError(state, { entityQuery }),
   };
 })
 export default class EntityListLoader extends React.Component {
@@ -152,21 +123,21 @@ export default class EntityListLoader extends React.Component {
 
     // $FlowFixMe: loading and error missing
     return children({
-      ..._.omit(props, ...CONSUMED_PROPS),
-      list,
+      ...props,
+      list: list,
       // alias the entities name:
-      [entityDef.nameMany]: list,
+      [entityDef.name]: list,
       reload: this.reload,
     });
   };
 
   render() {
     // $FlowFixMe: provided by @connect
-    const { allFetched, allError, loadingAndErrorWrapper } = this.props;
+    const { fetched, error, loadingAndErrorWrapper } = this.props;
     return loadingAndErrorWrapper ? (
       <LoadingAndErrorWrapper
-        loading={!allFetched}
-        error={allError}
+        loading={!fetched}
+        error={error}
         children={this.renderChildren}
       />
     ) : (
@@ -185,11 +156,6 @@ export const entityListLoader = (ellProps: Props) =>
     // eslint-disable-next-line react/display-name
     (props: Props) => (
       <EntityListLoader {...props} {...ellProps}>
-        {childProps => (
-          <ComposedComponent
-            {..._.omit(props, ...CONSUMED_PROPS)}
-            {...childProps}
-          />
-        )}
+        {childProps => <ComposedComponent {...props} {...childProps} />}
       </EntityListLoader>
     );

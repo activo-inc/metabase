@@ -8,12 +8,6 @@ import Icon from "metabase/components/Icon.jsx";
 import ListSearchField from "metabase/components/ListSearchField.jsx";
 import { List, CellMeasurer, CellMeasurerCache } from "react-virtualized";
 
-export type RenderItemWrapper = (
-  item: any,
-  itemIndex: number,
-  children?: any,
-) => React$Element;
-
 export default class AccordianList extends Component {
   constructor(props, context) {
     super(props, context);
@@ -60,7 +54,6 @@ export default class AccordianList extends Component {
     itemIsClickable: PropTypes.func,
     renderItem: PropTypes.func,
     renderSectionIcon: PropTypes.func,
-    renderItemWrapper: PropTypes.func,
     getItemClasses: PropTypes.func,
     alwaysTogglable: PropTypes.bool,
     alwaysExpanded: PropTypes.bool,
@@ -218,14 +211,6 @@ export default class AccordianList extends Component {
       );
     } else {
       return null;
-    }
-  }
-
-  renderItemWrapper(item, itemIndex, children) {
-    if (this.props.renderItemWrapper) {
-      return this.props.renderItemWrapper(item, itemIndex, children);
-    } else {
-      return children;
     }
   }
 
@@ -440,45 +425,41 @@ export default class AccordianList extends Component {
                       />
                     </div>
                   ) : type === "item" ? (
-                    this.renderItemWrapper(
-                      item,
-                      itemIndex,
-                      <div
+                    <div
+                      className={cx(
+                        "List-item flex mx1",
+                        {
+                          "List-item--selected": this.itemIsSelected(item),
+                          "List-item--disabled": !this.itemIsClickable(item),
+                          mb1: isLastItem,
+                        },
+                        this.getItemClasses(item, itemIndex),
+                      )}
+                    >
+                      <a
                         className={cx(
-                          "List-item flex mx1",
-                          {
-                            "List-item--selected": this.itemIsSelected(item),
-                            "List-item--disabled": !this.itemIsClickable(item),
-                            mb1: isLastItem,
-                          },
-                          this.getItemClasses(item, itemIndex),
+                          "p1 flex-full flex align-center",
+                          this.itemIsClickable(item)
+                            ? "cursor-pointer"
+                            : "cursor-default",
                         )}
+                        onClick={
+                          this.itemIsClickable(item) &&
+                          this.onChange.bind(this, item)
+                        }
                       >
-                        <a
-                          className={cx(
-                            "p1 flex-full flex align-center",
-                            this.itemIsClickable(item)
-                              ? "cursor-pointer"
-                              : "cursor-default",
-                          )}
-                          onClick={
-                            this.itemIsClickable(item) &&
-                            this.onChange.bind(this, item)
-                          }
-                        >
-                          <span className="flex align-center">
-                            {this.renderItemIcon(item, itemIndex)}
-                          </span>
-                          <h4 className="List-item-title ml1">{item.name}</h4>
-                        </a>
-                        {this.renderItemExtra(item, itemIndex)}
-                        {showItemArrows && (
-                          <div className="List-item-arrow flex align-center px1">
-                            <Icon name="chevronright" size={8} />
-                          </div>
-                        )}
-                      </div>,
-                    )
+                        <span className="flex align-center">
+                          {this.renderItemIcon(item, itemIndex)}
+                        </span>
+                        <h4 className="List-item-title ml1">{item.name}</h4>
+                      </a>
+                      {this.renderItemExtra(item, itemIndex)}
+                      {showItemArrows && (
+                        <div className="List-item-arrow flex align-center px1">
+                          <Icon name="chevronright" size={8} />
+                        </div>
+                      )}
+                    </div>
                   ) : null}
                 </div>
               )}

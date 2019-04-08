@@ -10,8 +10,6 @@ import {
   describeE2E,
 } from "../support/utils";
 
-import { METABASE_SESSION_COOKIE } from "metabase/lib/cookies";
-
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 
 describeE2E("auth/login", () => {
@@ -38,7 +36,7 @@ describeE2E("auth/login", () => {
       await waitForUrl(driver, `${server.host}/`);
       const sessionCookie = await driver
         .manage()
-        .getCookie(METABASE_SESSION_COOKIE);
+        .getCookie("metabase.SESSION_ID");
       sessionId = sessionCookie.value;
     });
 
@@ -57,7 +55,7 @@ describeE2E("auth/login", () => {
     beforeEach(async () => {
       await driver.get(`${server.host}/`);
       await driver.manage().deleteAllCookies();
-      await driver.manage().addCookie(METABASE_SESSION_COOKIE, sessionId);
+      await driver.manage().addCookie("metabase.SESSION_ID", sessionId);
     });
 
     it("is logged in", async () => {

@@ -54,7 +54,6 @@ export default class ExpressionEditorTextfield extends Component {
     onChange: PropTypes.func.isRequired,
     onError: PropTypes.func.isRequired,
     startRule: PropTypes.string.isRequired,
-    className: PropTypes.string,
   };
 
   static defaultProps = {
@@ -276,22 +275,16 @@ export default class ExpressionEditorTextfield extends Component {
       errorMessage = t`unknown error`;
     }
 
-    const { placeholder, className, style } = this.props;
+    const { placeholder } = this.props;
     const { suggestions, showAll } = this.state;
 
     return (
       <div className={cx(S.editor, "relative")}>
         <TokenizedInput
           ref="input"
-          style={style}
-          className={cx(
-            S.input,
-            "my1 input block full",
-            {
-              "border-error": errorMessage,
-            },
-            className,
-          )}
+          className={cx(S.input, "my1 input block full", {
+            "border-error": errorMessage,
+          })}
           type="text"
           placeholder={placeholder}
           value={this.state.expressionString}

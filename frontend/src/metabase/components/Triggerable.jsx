@@ -120,7 +120,7 @@ export default ComposedComponent =>
       }
 
       let { children } = this.props;
-      if (typeof children === "function" && isOpen) {
+      if (typeof children === "function") {
         // if children is a render prop, pass onClose to it
         children = children({ onClose: this.onClose });
       } else if (

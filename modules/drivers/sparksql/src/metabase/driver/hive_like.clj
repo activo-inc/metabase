@@ -1,6 +1,5 @@
 (ns metabase.driver.hive-like
   (:require [clojure.java.jdbc :as jdbc]
-            [clojure.string :as str]
             [honeysql
              [core :as hsql]
              [format :as hformat]]
@@ -13,11 +12,9 @@
             [metabase.models
              [field :refer [Field]]
              [table :refer [Table]]]
-            [metabase.util
-             [date :as du]
-             [honeysql-extensions :as hx]]
+            [metabase.util.honeysql-extensions :as hx]
             [toucan.db :as db])
-  (:import [java.sql PreparedStatement Time] java.util.Date))
+  (:import java.util.Date))
 
 (driver/register! :hive-like, :parent :sql-jdbc, :abstract? true)
 
@@ -113,31 +110,27 @@
 
 (defn- run-query
   "Run the query itself."
-  [{sql :query, :keys [params remark max-rows]} connection]
-  (let [sql     (str "-- " remark "\n" (hx/unescape-dots sql))
-        options {:identifiers identity
-                 :as-arrays?  true
-                 :max-rows    max-rows}]
-    (with-open [connection (jdbc/get-connection connection)]
-      (with-open [^PreparedStatement statement (jdbc/prepare-statement connection sql options)]
-        (let [statement        (into [statement] params)
-              [columns & rows] (jdbc/query connection statement options)]
-          {:rows    (or rows [])
-           :columns (map u/keyword->qualified-name columns)})))))
+  [{sql :query, params :params, remark :remark} connection]
+  (let [sql              (str "-- " remark "\n" (hx/unescape-dots sql))
+        statement        (into [sql] params)
+        [columns & rows] (jdbc/query connection statement {:identifiers identity, :as-arrays? true})]
+    {:rows    (or rows [])
+     :columns (map u/keyword->qualified-name columns)}))
 
 (defn run-query-without-timezone
   "Runs the given query without trying to set a timezone"
   [_ _ connection query]
   (run-query query connection))
 
-(defmethod unprepare/unprepare-value [:hive-like Date] [_ value]
+(defmethod hformat/fn-handler "hive-like-from-unixtime" [_ datetime-literal]
   (hformat/to-sql
    (hsql/call :from_unixtime
      (hsql/call :unix_timestamp
-       (hx/literal (du/date->iso-8601 value))
+       datetime-literal
        (hx/literal "yyyy-MM-dd\\\\'T\\\\'HH:mm:ss.SSS\\\\'Z\\\\'")))))
 
-(prefer-method unprepare/unprepare-value [:sql Time] [:hive-like Date])
-
-(defmethod unprepare/unprepare-value [:hive-like String] [_ value]
-  (str \' (str/replace value "'" "\\\\'") \'))
+(defn unprepare
+  "Convert a normal SQL `[statement & prepared-statement-args]` vector into a flat, non-prepared statement.
+   Deals with iso-8601-fn in a Hive compatible way"
+  [sql-and-args]
+  (unprepare/unprepare sql-and-args :iso-8601-fn :hive-like-from-unixtime))

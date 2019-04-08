@@ -23,7 +23,7 @@ export function canEditPermissions(group) {
 }
 
 export function canEditMembership(group) {
-  return !isDefaultGroup(group) && !isMetaBotGroup(group);
+  return !isDefaultGroup(group);
 }
 
 export function getGroupColor(group) {

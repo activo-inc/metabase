@@ -5,9 +5,9 @@
              [format :as tf]]
             [medley.core :as m]
             [metabase.mbql.schema :as mbql.s]
-            [metabase.models.params :as params]
+            [schema.core :as s]
             [metabase.util.schema :as su]
-            [schema.core :as s])
+            [metabase.models.params :as params])
   (:import [org.joda.time DateTime DateTimeConstants]))
 
 (s/defn date-type?
@@ -177,7 +177,7 @@
               {:start date, :end date})
     :filter (fn [{:keys [date]} field-id-clause]
               (let [iso8601date (day->iso8601 date)]
-                [:= [:datetime-field field-id-clause :day] iso8601date]))}
+                [:= [:datetime-field field-id-clause :day] :between]))}
    ;; day range
    {:parser (regex->parser #"([0-9-T:]+)~([0-9-T:]+)" [:date-1 :date-2])
     :range  (fn [{:keys [date-1 date-2]} _]

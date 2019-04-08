@@ -1,6 +1,6 @@
 (ns metabase.query-processor.middleware.desugar-test
-  (:require [expectations :refer [expect]]
-            [metabase.query-processor.middleware.desugar :as desugar]))
+  (:require [metabase.query-processor.middleware.desugar :as desugar]
+            [expectations :refer [expect]]))
 
 (def ^:private ^{:arglists '([query])} desugar
   (desugar/desugar identity))
@@ -208,15 +208,7 @@
                               [:relative-datetime -30 :day]
                               [:relative-datetime -1 :day]]
                              [:!= [:field-id 3] "(not set)"]
-                             [:!= [:field-id 3] "url"]]
-              :aggregation  [[:share [:and
-                                      [:= [:field-id 1] "Run Query"]
-                                      [:between
-                                       [:datetime-field [:field-id 2] :day]
-                                       [:relative-datetime -30 :day]
-                                       [:relative-datetime -1 :day]]
-                                      [:!= [:field-id 3] "(not set)"]
-                                      [:!= [:field-id 3] "url"]]]]}}
+                             [:!= [:field-id 3] "url"]]}}
   (desugar
    {:database 1
     :type     :query
@@ -224,8 +216,4 @@
                :filter       [:and
                               [:= [:field-id 1] "Run Query"]
                               [:time-interval [:field-id 2] -30 :day]
-                              [:!= [:field-id 3] "(not set)" "url"]]
-               :aggregation  [[:share [:and
-                                       [:= [:field-id 1] "Run Query"]
-                                       [:time-interval [:field-id 2] -30 :day]
-                                       [:!= [:field-id 3] "(not set)" "url"]]]]}}))
+                              [:!= [:field-id 3] "(not set)" "url"]]}}))

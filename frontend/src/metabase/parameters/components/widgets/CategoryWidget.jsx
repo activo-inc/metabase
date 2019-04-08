@@ -3,7 +3,7 @@
 
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import { t, ngettext, msgid } from "c-3po";
+import { t } from "c-3po";
 
 import { createMultiwordSearchRegex } from "metabase/lib/string";
 import { getHumanReadableValue } from "metabase/lib/query/field";
@@ -58,8 +58,7 @@ export default class CategoryWidget extends Component {
 
   static format(values, fieldValues) {
     if (Array.isArray(values) && values.length > 1) {
-      const n = values.length;
-      return ngettext(msgid`${n} selection`, `${n} selections`, n);
+      return `${values.length} selections`;
     } else {
       return getHumanReadableValue(values, fieldValues);
     }

@@ -4,11 +4,9 @@ import { t } from "c-3po";
 import BrowserCrumbs from "metabase/components/BrowserCrumbs";
 import { connect } from "react-redux";
 
-import Database from "metabase/entities/databases";
-import Schema from "metabase/entities/schemas";
-import Table from "metabase/entities/tables";
-
 import EntityItem from "metabase/components/EntityItem";
+import EntityListLoader from "metabase/entities/containers/EntityListLoader";
+import EntityObjectLoader from "metabase/entities/containers/EntityObjectLoader";
 
 import { normal } from "metabase/lib/colors";
 import Question from "metabase-lib/lib/Question";
@@ -50,16 +48,43 @@ function getDefaultQuestionForTable(table) {
   });
 }
 
+export const DatabaseListLoader = props => (
+  <EntityListLoader entityType="databases" {...props} />
+);
+
 const PAGE_PADDING = [1, 2, 4];
 const ITEM_WIDTHS = [1, 1 / 2, 1 / 3];
 const ANALYTICS_CONTEXT = "Data Browse";
+
+const SchemaListLoader = ({ dbId, ...props }) => (
+  <EntityListLoader entityType="schemas" entityQuery={{ dbId }} {...props} />
+);
+
+const TableListLoader = ({ dbId, schemaName, ...props }) => (
+  <EntityListLoader
+    entityType="tables"
+    entityQuery={{ dbId, schemaName }}
+    {...props}
+  />
+);
+
+const DatabaseName = ({ dbId }) => (
+  <EntityObjectLoader
+    entityType="databases"
+    entityId={dbId}
+    properties={["name"]}
+    loadingAndErrorWrapper={false}
+  >
+    {({ object }) => (object ? <span>{object.name}</span> : null)}
+  </EntityObjectLoader>
+);
 
 export class SchemaBrowser extends React.Component {
   render() {
     const { dbId } = this.props.params;
     return (
       <Box>
-        <Schema.ListLoader query={{ dbId }}>
+        <SchemaListLoader dbId={dbId}>
           {({ schemas }) =>
             schemas.length > 1 ? (
               <Box>
@@ -68,7 +93,7 @@ export class SchemaBrowser extends React.Component {
                     analyticsContext={ANALYTICS_CONTEXT}
                     crumbs={[
                       { title: t`Our data`, to: "browse" },
-                      { title: <Database.Name id={dbId} /> },
+                      { title: <DatabaseName dbId={dbId} /> },
                     ]}
                   />
                 </Box>
@@ -107,7 +132,7 @@ export class SchemaBrowser extends React.Component {
               <TableBrowser {...this.props} />
             )
           }
-        </Schema.ListLoader>
+        </SchemaListLoader>
       </Box>
     );
   }
@@ -121,7 +146,7 @@ export class TableBrowser extends React.Component {
     const { dbId, schemaName } = this.props.params;
     return (
       <Box>
-        <Table.ListLoader query={{ dbId, schemaName }}>
+        <TableListLoader dbId={dbId} schemaName={schemaName}>
           {({ tables, loading, error }) => {
             return (
               <Box>
@@ -131,7 +156,7 @@ export class TableBrowser extends React.Component {
                     crumbs={[
                       { title: t`Our data`, to: "browse" },
                       {
-                        title: <Database.Name id={dbId} />,
+                        title: <DatabaseName dbId={dbId} />,
                         to: `browse/${dbId}`,
                       },
                       schemaName != null && { title: schemaName },
@@ -204,7 +229,7 @@ export class TableBrowser extends React.Component {
               </Box>
             );
           }}
-        </Table.ListLoader>
+        </TableListLoader>
       </Box>
     );
   }
@@ -226,7 +251,7 @@ export class DatabaseBrowser extends React.Component {
             analyticsContext={ANALYTICS_CONTEXT}
           />
         </Box>
-        <Database.ListLoader>
+        <DatabaseListLoader>
           {({ databases, loading, error }) => {
             return (
               <Grid>
@@ -246,7 +271,7 @@ export class DatabaseBrowser extends React.Component {
               </Grid>
             );
           }}
-        </Database.ListLoader>
+        </DatabaseListLoader>
       </Box>
     );
   }

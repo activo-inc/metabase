@@ -10,16 +10,18 @@ import ModalContent from "metabase/components/ModalContent.jsx";
 
 import * as Urls from "metabase/lib/urls";
 
-import Collection from "metabase/entities/collections";
+import Collections from "metabase/entities/collections";
+import { entityObjectLoader } from "metabase/entities/containers/EntityObjectLoader";
 
 const mapDispatchToProps = {
-  setCollectionArchived: Collection.actions.setArchived,
+  setCollectionArchived: Collections.actions.setArchived,
   push,
 };
 
 @connect(null, mapDispatchToProps)
-@Collection.load({
-  id: (state, props) => props.params.collectionId,
+@entityObjectLoader({
+  entityType: "collections",
+  entityId: (state, props) => props.params.collectionId,
 })
 @withRouter
 class ArchiveCollectionModal extends React.Component {

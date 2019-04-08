@@ -3,7 +3,6 @@ import inflection from "inflection";
 
 import { formatDateTimeWithUnit } from "metabase/lib/formatting";
 import { parseTimestamp } from "metabase/lib/time";
-import { t, ngettext, msgid } from "c-3po";
 
 export const DATETIME_UNITS = [
   // "default",
@@ -109,38 +108,34 @@ export function generateTimeIntervalDescription(n, unit) {
     switch (n) {
       case "current":
       case 0:
-        return [t`Today`];
+        return ["Today"];
       case "next":
       case 1:
-        return [t`Tomorrow`];
+        return ["Tomorrow"];
       case "last":
       case -1:
-        return [t`Yesterday`];
+        return ["Yesterday"];
     }
   }
 
   if (!unit && n === 0) {
-    return t`Today`;
+    return "Today";
   } // ['relative-datetime', 'current'] is a legal MBQL form but has no unit
 
-  switch (n) {
-    case "current":
-    case 0:
-      return [t`This ${formatBucketing(unit)}`];
-    case "next":
-    case 1:
-      return [t`Next ${formatBucketing(unit)}`];
-    case "last":
-    case -1:
-      return [t`Previous ${formatBucketing(unit)}`];
-  }
-
-  if (n < 0) {
-    return [t`Previous ${-n} ${formatBucketing(unit, -n)}`];
-  } else if (n > 0) {
-    return [t`Next ${n} ${formatBucketing(unit, n)}`];
+  unit = inflection.capitalize(unit);
+  if (typeof n === "string") {
+    if (n === "current") {
+      n = "this";
+    }
+    return [inflection.capitalize(n) + " " + unit];
   } else {
-    return [t`This ${formatBucketing(unit)}`];
+    if (n < 0) {
+      return ["Past " + -n + " " + inflection.inflect(unit, -n)];
+    } else if (n > 0) {
+      return ["Next " + n + " " + inflection.inflect(unit, n)];
+    } else {
+      return ["This " + unit];
+    }
   }
 }
 
@@ -168,54 +163,23 @@ export function generateTimeValueDescription(value, bucketing) {
     } else {
       // FIXME: what to do if the bucketing and unit don't match?
       if (n === 0) {
-        return t`Now`;
+        return "Now";
       } else {
-        return n < 0
-          ? t`${-n} ${formatBucketing(unit, -n).toLowerCase()} ago`
-          : t`${n} ${formatBucketing(unit, n).toLowerCase()} from now`;
+        return (
+          Math.abs(n) +
+          " " +
+          inflection.inflect(unit, Math.abs(n)) +
+          (n < 0 ? " ago" : " from now")
+        );
       }
     }
   } else {
     console.warn("Unknown datetime format", value);
-    return `[${t`Unknown`}]`;
+    return "[Unknown]";
   }
 }
 
-export function formatBucketing(bucketing = "", n = 1) {
-  switch (bucketing) {
-    case "default":
-      return ngettext(msgid`Default period`, `Default periods`, n);
-    case "minute":
-      return ngettext(msgid`Minute`, `Minutes`, n);
-    case "hour":
-      return ngettext(msgid`Hour`, `Hours`, n);
-    case "day":
-      return ngettext(msgid`Day`, `Days`, n);
-    case "week":
-      return ngettext(msgid`Week`, `Weeks`, n);
-    case "month":
-      return ngettext(msgid`Month`, `Months`, n);
-    case "quarter":
-      return ngettext(msgid`Quarter`, `Quarters`, n);
-    case "year":
-      return ngettext(msgid`Year`, `Years`, n);
-    case "minute-of-hour":
-      return ngettext(msgid`Minute of hour`, `Minutes of hour`, n);
-    case "hour-of-day":
-      return ngettext(msgid`Hour of day`, `Hours of day`, n);
-    case "day-of-week":
-      return ngettext(msgid`Day of week`, `Days of week`, n);
-    case "day-of-month":
-      return ngettext(msgid`Day of month`, `Days of month`, n);
-    case "day-of-year":
-      return ngettext(msgid`Day of year`, `Days of year`, n);
-    case "week-of-year":
-      return ngettext(msgid`Week of year`, `Weeks of year`, n);
-    case "month-of-year":
-      return ngettext(msgid`Month of year`, `Months of year`, n);
-    case "quarter-of-year":
-      return ngettext(msgid`Quarter of year`, `Quarters of year`, n);
-  }
+export function formatBucketing(bucketing = "") {
   let words = bucketing.split("-");
   words[0] = inflection.capitalize(words[0]);
   return words.join(" ");
@@ -291,7 +255,6 @@ export function parseFieldTargetId(field) {
 function max() {
   return moment(new Date(864000000000000));
 }
-
 function min() {
   return moment(new Date(-864000000000000));
 }

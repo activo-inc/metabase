@@ -1,6 +1,6 @@
 (ns metabase.cmd.reset-password
   (:require [metabase.db :as mdb]
-            [metabase.models.user :as user :refer [User]]
+            [metabase.models.user :refer [User] :as user]
             [metabase.util.i18n :refer [trs]]
             [toucan.db :as db]))
 

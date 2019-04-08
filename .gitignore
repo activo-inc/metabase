@@ -58,5 +58,3 @@ bin/node_modules/
 *.trace.db
 /backend-checksums.txt
 .vscode
-target/checksum.txt
-/resources/frontend_client/app/locales

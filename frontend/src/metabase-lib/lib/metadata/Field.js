@@ -3,9 +3,6 @@
 import Base from "./Base";
 import Table from "./Table";
 
-import _ from "underscore";
-import moment from "moment";
-
 import { FieldIDDimension } from "../Dimension";
 
 import { getFieldValues } from "metabase/lib/query/field";
@@ -126,46 +123,21 @@ export default class Field extends Base {
     }
   }
 
-  aggregations() {
-    return this.table
-      ? this.table.aggregation_options.filter(
-          aggregation =>
-            aggregation.validFieldsFilters[0] &&
-            aggregation.validFieldsFilters[0]([this]).length === 1,
-        )
-      : null;
-  }
-
   /**
    * Returns a default breakout MBQL clause for this field
+   *
+   * Tries to look up a default subdimension (like "Created At: Day" for "Created At" field)
+   * and if it isn't found, uses the plain field id dimension (like "Product ID") as a fallback.
    */
-  getDefaultBreakout() {
-    return this.dimension().defaultBreakout();
-  }
-
-  /**
-   * Returns a default date/time unit for this field
-   */
-  getDefaultDateTimeUnit() {
-    try {
-      const fingerprint = this.fingerprint.type["type/DateTime"];
-      const days = moment(fingerprint.latest).diff(
-        moment(fingerprint.earliest),
-        "day",
-      );
-      if (days < 1) {
-        return "minute";
-      } else if (days < 31) {
-        return "day";
-      } else if (days < 365) {
-        return "week";
-      } else {
-        return "month";
-      }
-    } catch (e) {
-      return "day";
+  getDefaultBreakout = () => {
+    const fieldIdDimension = this.dimension();
+    const defaultSubDimension = fieldIdDimension.defaultDimension();
+    if (defaultSubDimension) {
+      return defaultSubDimension.mbql();
+    } else {
+      return fieldIdDimension.mbql();
     }
-  }
+  };
 
   /**
    * Returns the remapped field, if any
@@ -236,16 +208,5 @@ export default class Field extends Base {
     } else {
       return this.parameterSearchField();
     }
-  }
-
-  column() {
-    return _.pick(
-      this.getPlainObject(),
-      "id",
-      "name",
-      "display_name",
-      "base_type",
-      "special_type",
-    );
   }
 }

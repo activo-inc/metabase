@@ -9,6 +9,7 @@ import { capitalize } from "metabase/lib/formatting";
 import MetabaseSettings from "metabase/lib/settings";
 import * as Urls from "metabase/lib/urls";
 import Modal from "metabase/components/Modal";
+import Logs from "metabase/components/Logs";
 
 import LogoIcon from "metabase/components/LogoIcon";
 import EntityMenu from "metabase/components/EntityMenu";
@@ -52,6 +53,14 @@ export default class ProfileLink extends Component {
           event: `Navbar;Profile Dropdown;${
             adminContext ? "Exit Admin" : "Enter Admin"
           }`,
+        },
+      ]),
+      ...(admin && [
+        {
+          title: t`Logs`,
+          icon: null,
+          action: () => this.openModal("logs"),
+          event: `Navbar;Profile Dropdown;Debugging ${tag}`,
         },
       ]),
       {
@@ -125,6 +134,10 @@ export default class ProfileLink extends Component {
               </span>
               <span>{t`and is built with care in San Francisco, CA`}</span>
             </div>
+          </Modal>
+        ) : modalOpen === "logs" ? (
+          <Modal wide onClose={this.closeModal}>
+            <Logs onClose={this.closeModal} />
           </Modal>
         ) : null}
       </Box>

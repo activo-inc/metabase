@@ -14,7 +14,7 @@
 (let [task-2 (tu/random-name)
       task-3 (tu/random-name)]
   (expect
-    #{task-2 task-3 "task-history-cleanup"}
+    #{task-2 task-3 (var-get #'cleanup-task/job-name)}
     (let [t1-start (time/now)
           t2-start (tht/add-second t1-start)
           t3-start (tht/add-second t2-start)]
@@ -34,7 +34,7 @@
       task-2 (tu/random-name)
       task-3 (tu/random-name)]
   (expect
-    #{task-1 task-2 task-3 "task-history-cleanup"}
+    #{task-1 task-2 task-3 (var-get #'cleanup-task/job-name)}
     (let [t1-start (time/now)
           t2-start (tht/add-second t1-start)
           t3-start (tht/add-second t2-start)]

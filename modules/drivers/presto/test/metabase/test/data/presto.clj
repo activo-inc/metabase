@@ -77,7 +77,7 @@
                               (hsql/format :allow-dashed-names? true, :quoting :ansi))]
     (if (nil? params)
       query
-      (unprepare/unprepare :presto (cons query params)))))
+      (unprepare/unprepare (cons query params) :quote-escape "'", :iso-8601-fn :from_iso8601_timestamp))))
 
 (defmethod tx/create-db! :presto
   [driver {:keys [table-definitions database-name] :as dbdef} & {:keys [skip-drop-db?]}]

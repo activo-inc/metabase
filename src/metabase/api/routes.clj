@@ -34,28 +34,26 @@
              [tiles :as tiles]
              [user :as user]
              [util :as util]]
-            [metabase.middleware
-             [auth :as middleware.auth]
-             [exceptions :as middleware.exceptions]]
+            [metabase.middleware :as middleware]
             [metabase.util.i18n :refer [tru]]))
 
 (def ^:private +generic-exceptions
   "Wrap ROUTES so any Exception thrown is just returned as a generic 400, to prevent details from leaking in public
   endpoints."
-  middleware.exceptions/genericize-exceptions)
+  middleware/genericize-exceptions)
 
 (def ^:private +message-only-exceptions
   "Wrap ROUTES so any Exception thrown is just returned as a 400 with only the message from the original
   Exception (i.e., remove the original stacktrace), to prevent details from leaking in public endpoints."
-  middleware.exceptions/message-only-exceptions)
+  middleware/message-only-exceptions)
 
 (def ^:private +apikey
   "Wrap ROUTES so they may only be accessed with proper apikey credentials."
-  middleware.auth/enforce-api-key)
+  middleware/enforce-api-key)
 
 (def ^:private +auth
   "Wrap ROUTES so they may only be accessed with proper authentiaction credentials."
-  middleware.auth/enforce-authentication)
+  middleware/enforce-authentication)
 
 (defroutes ^{:doc "Ring routes for API endpoints."} routes
   (context "/activity"             [] (+auth activity/routes))

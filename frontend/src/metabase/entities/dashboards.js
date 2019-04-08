@@ -26,9 +26,6 @@ const Dashboards = createEntity({
   name: "dashboards",
   path: "/api/dashboard",
 
-  displayNameOne: t`dashboard`,
-  displayNameMany: t`dashboards`,
-
   api: {
     favorite: POST("/api/dashboard/:id/favorite"),
     unfavorite: DELETE("/api/dashboard/:id/favorite"),
@@ -156,8 +153,8 @@ const Dashboards = createEntity({
         name: "collection_id",
         title: t`Which collection should this go in?`,
         type: "collection",
-        validate: collectionId =>
-          collectionId === undefined ? "Collection is required" : null,
+        validate: colelctionId =>
+          colelctionId === undefined ? "Collection is required" : null,
       },
     ],
   },

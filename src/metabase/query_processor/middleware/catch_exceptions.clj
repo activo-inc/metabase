@@ -1,6 +1,7 @@
 (ns metabase.query-processor.middleware.catch-exceptions
   "Middleware for catching exceptions thrown by the query processor and returning them in a friendlier format."
-  (:require [metabase.util :as u]
+  (:require [metabase.query-processor.middleware.add-query-throttle :as query-throttle]
+            [metabase.util :as u]
             schema.utils)
   (:import [schema.utils NamedError ValidationError]))
 
@@ -63,8 +64,11 @@
     (try (qp query)
          (catch clojure.lang.ExceptionInfo e
            (let [{error :error, error-type :type, :as data} (ex-data e)]
-             (fail query e (when-let [error-msg (and (= error-type :schema.core/error)
-                                                     (explain-schema-validation-error error))]
-                             {:error error-msg}))))
+             ;; When we've hit our concurrent query limit, let that exception bubble up, otherwise repackage it as a failure
+             (if (=  error-type ::query-throttle/concurrent-query-limit-reached)
+               (throw e)
+               (fail query e (when-let [error-msg (and (= error-type :schema.core/error)
+                                                       (explain-schema-validation-error error))]
+                               {:error error-msg})))))
          (catch Throwable e
            (fail query e)))))

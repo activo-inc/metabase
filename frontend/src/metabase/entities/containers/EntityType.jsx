@@ -9,6 +9,7 @@ export default (entityType?: string) => (
 ) => {
   const mapStateToProps = (state, props) => ({
     entityDef:
+      props.entityDef ||
       // dynamic require due to dependency load order issues
       require("metabase/entities")[entityType || props.entityType],
   });
@@ -42,7 +43,7 @@ export default (entityType?: string) => (
 
       render() {
         return (
-          <ComposedComponent {...this.props} {...this._boundActionCreators} />
+          <ComposedComponent {...this._boundActionCreators} {...this.props} />
         );
       }
     },

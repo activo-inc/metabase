@@ -3,9 +3,10 @@ import PropTypes from "prop-types";
 
 import { t } from "c-3po";
 
-import { Flex } from "grid-styled";
+import { Flex, Box } from "grid-styled";
+import Subhead from "metabase/components/Subhead";
 import Button from "metabase/components/Button";
-import ModalContent from "metabase/components/ModalContent";
+import Icon from "metabase/components/Icon";
 
 import CollectionPicker from "metabase/containers/CollectionPicker";
 
@@ -40,7 +41,15 @@ class CollectionMoveModal extends React.Component {
     const { selectedCollectionId } = this.state;
 
     return (
-      <ModalContent title={this.props.title} onClose={this.props.onClose}>
+      <Box p={3}>
+        <Flex align="center" mb={2}>
+          <Subhead>{this.props.title}</Subhead>
+          <Icon
+            name="close"
+            className="ml-auto"
+            onClick={() => this.props.onClose()}
+          />
+        </Flex>
         <CollectionPicker
           value={selectedCollectionId}
           onChange={selectedCollectionId =>
@@ -69,7 +78,7 @@ class CollectionMoveModal extends React.Component {
             {t`Move`}
           </Button>
         </Flex>
-      </ModalContent>
+      </Box>
     );
   }
 }

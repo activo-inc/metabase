@@ -22,7 +22,11 @@
   [key]
   {key su/NonBlankString}
   (api/check-superuser)
-  (setting/user-facing-value key))
+  (let [k (keyword key)
+        v (setting/get k)]
+    ;; for security purposes, don't return value of a setting if it was defined via env var
+    (when (not= v (setting/env-var-value k))
+      v)))
 
 (api/defendpoint PUT "/:key"
   "Create/update a `Setting`. You must be a superuser to do this.

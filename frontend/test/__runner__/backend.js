@@ -76,10 +76,7 @@ export const BackendResource = createSharedResource("BackendResource", {
           ")",
       );
       while (!await isReady(server.host)) {
-        if (!process.env["CI"]) {
-          // disable for CI since it break's CircleCI's no_output_timeout
-          process.stdout.write(".");
-        }
+        process.stdout.write(".");
         await delay(500);
       }
       process.stdout.write("\n");

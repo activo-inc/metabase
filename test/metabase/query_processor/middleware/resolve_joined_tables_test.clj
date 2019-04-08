@@ -2,7 +2,8 @@
   (:require [expectations :refer :all]
             [metabase.query-processor.middleware.resolve-joined-tables :as resolve-joined-tables]
             [metabase.query-processor.test-util :as qp.test-util]
-            [metabase.test.data :as data]))
+            [metabase.test.data :as data]
+            [metabase.query-processor.store :as qp.store]))
 
 (defn- resolve-joined-tables [query]
   (qp.test-util/with-everything-store

@@ -31,12 +31,11 @@
 ;; Check that SSL params get added the connection details in the way we'd like # no SSL -- this should *not* include
 ;; the key :ssl (regardless of its value) since that will cause the PG driver to use SSL anyway
 (expect
-  {:classname                     "org.postgresql.Driver"
-   :subprotocol                   "postgresql"
-   :subname                       "//localhost:5432/bird_sightings"
-   :OpenSourceSubProtocolOverride true
-   :user                          "camsaul"
-   :sslmode                       "disable"}
+  {:user        "camsaul"
+   :classname   "org.postgresql.Driver"
+   :subprotocol "postgresql"
+   :subname     "//localhost:5432/bird_sightings?sslmode=disable&OpenSourceSubProtocolOverride=true"
+   :sslmode     "disable"}
   (sql-jdbc.conn/connection-details->spec :postgres
     {:ssl    false
      :host   "localhost"
@@ -46,14 +45,13 @@
 
 ;; ## ssl - check that expected params get added
 (expect
-  {:classname                     "org.postgresql.Driver"
-   :subprotocol                   "postgresql"
-   :subname                       "//localhost:5432/bird_sightings"
-   :OpenSourceSubProtocolOverride true
-   :user                          "camsaul"
-   :ssl                           true
-   :sslmode                       "require"
-   :sslfactory                    "org.postgresql.ssl.NonValidatingFactory"}
+  {:ssl         true
+   :sslmode     "require"
+   :classname   "org.postgresql.Driver"
+   :subprotocol "postgresql"
+   :user        "camsaul"
+   :sslfactory  "org.postgresql.ssl.NonValidatingFactory"
+   :subname     "//localhost:5432/bird_sightings?ssl=true&sslmode=require&OpenSourceSubProtocolOverride=true"}
   (sql-jdbc.conn/connection-details->spec :postgres
     {:ssl    true
      :host   "localhost"
@@ -288,16 +286,11 @@
 
 ;; make sure connection details w/ extra params work as expected
 (expect
-  {:classname                     "org.postgresql.Driver"
-   :subprotocol                   "postgresql"
-   :subname                       "//localhost:5432/cool?prepareThreshold=0"
-   :OpenSourceSubProtocolOverride true
-   :sslmode                       "disable"}
-  (sql-jdbc.conn/connection-details->spec :postgres
-    {:host               "localhost"
-     :port               "5432"
-     :dbname             "cool"
-     :additional-options "prepareThreshold=0"}))
+  "//localhost:5432/cool?sslmode=disable&OpenSourceSubProtocolOverride=true&prepareThreshold=0"
+  (:subname (sql-jdbc.conn/connection-details->spec :postgres {:host               "localhost"
+                                                          :port               "5432"
+                                                          :dbname             "cool"
+                                                          :additional-options "prepareThreshold=0"})))
 
 (expect-with-driver :postgres
   "UTC"
@@ -413,9 +406,9 @@
                               " \"public\".\"birds\".\"status\" AS \"status\","
                               " \"public\".\"birds\".\"type\" AS \"type\" "
                               "FROM \"public\".\"birds\" "
-                              "WHERE \"public\".\"birds\".\"type\" = CAST('toucan' AS \"bird type\") "
+                              "WHERE \"public\".\"birds\".\"type\" = CAST(? AS \"bird type\") "
                               "LIMIT 10")
-                 :params nil}}
+                 :params ["toucan"]}}
   (do-with-enums-db
     (fn [db]
       (let [table-id           (db/select-one-id Table :db_id (u/get-id db), :name "birds")

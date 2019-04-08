@@ -1,7 +1,6 @@
 import React from "react";
 
-import Button from "metabase/components/Button";
-import Link from "metabase/components/Link";
+import cx from "classnames";
 
 const AdminPaneTitle = ({
   title,
@@ -9,26 +8,19 @@ const AdminPaneTitle = ({
   buttonText,
   buttonAction,
   buttonDisabled,
-  buttonLink,
 }) => (
   <section className="clearfix px2">
-    {buttonText &&
-      buttonLink && (
-        <Link to={buttonLink} className="inline-block float-right">
-          <Button primary>{buttonText}</Button>
-        </Link>
-      )}
-    {buttonText &&
-      buttonAction && (
-        <Button
-          className="float-right"
-          primary={!buttonDisabled}
-          disabled={buttonDisabled}
-          onClick={buttonAction}
-        >
-          {buttonText}
-        </Button>
-      )}
+    {buttonText && buttonAction ? (
+      <button
+        className={cx("Button float-right", {
+          "Button--primary": !buttonDisabled,
+        })}
+        disabled={buttonDisabled}
+        onClick={buttonAction}
+      >
+        {buttonText}
+      </button>
+    ) : null}
     <h2 className="PageTitle">{title}</h2>
     {description && <p className="text-measure">{description}</p>}
   </section>
@@ -41,7 +33,6 @@ const AdminPaneLayout = ({
   buttonAction,
   buttonDisabled,
   children,
-  buttonLink,
 }) => (
   <div className="wrapper">
     <AdminPaneTitle
@@ -50,7 +41,6 @@ const AdminPaneLayout = ({
       buttonText={buttonText}
       buttonAction={buttonAction}
       buttonDisabled={buttonDisabled}
-      buttonLink={buttonLink}
     />
     {children}
   </div>

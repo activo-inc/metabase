@@ -43,6 +43,7 @@ import CollectionPermissionsModal from "metabase/admin/permissions/containers/Co
 import UserCollectionList from "metabase/containers/UserCollectionList";
 
 import PulseEditApp from "metabase/pulse/containers/PulseEditApp.jsx";
+import PulseMoveModal from "metabase/pulse/components/PulseMoveModal";
 import SetupApp from "metabase/setup/containers/SetupApp.jsx";
 import PostSetupApp from "metabase/setup/containers/PostSetupApp.jsx";
 import UserSettingsApp from "metabase/user/containers/UserSettingsApp.jsx";
@@ -324,6 +325,7 @@ export const getRoutes = store => (
         <Route path="create" component={PulseEditApp} />
         <Route path=":pulseId">
           <IndexRoute component={PulseEditApp} />
+          <ModalRoute path="move" modal={PulseMoveModal} />
         </Route>
       </Route>
 

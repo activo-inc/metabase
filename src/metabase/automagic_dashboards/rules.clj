@@ -7,7 +7,7 @@
             [metabase.query-processor.util :as qp.util]
             [metabase.util :as u]
             [metabase.util
-             [i18n :refer [LocalizedString trs tru]]
+             [i18n :refer [trs tru LocalizedString]]
              [schema :as su]]
             [schema
              [coerce :as sc]

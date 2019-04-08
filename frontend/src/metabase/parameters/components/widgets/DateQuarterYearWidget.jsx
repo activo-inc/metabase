@@ -5,10 +5,6 @@ import YearPicker from "./YearPicker.jsx";
 import moment from "moment";
 import _ from "underscore";
 import cx from "classnames";
-import { t } from "c-3po";
-
-// translator: this is a "moment" format string (https://momentjs.com/docs/#/displaying/format/) It should include "Q" for the quarter number, and raw text can be escaped by brackets. For eample "[Quarter] Q" will be rendered as "Quarter 1" etc
-const QUARTER_FORMAT_STRING = t`[Q]Q`;
 
 export default class DateQuarterYearWidget extends Component {
   constructor(props, context) {
@@ -88,6 +84,6 @@ const Quarter = ({ quarter, selected, onClick }) => (
   >
     {moment()
       .quarter(quarter)
-      .format(QUARTER_FORMAT_STRING)}
+      .format("[Q]Q")}
   </li>
 );

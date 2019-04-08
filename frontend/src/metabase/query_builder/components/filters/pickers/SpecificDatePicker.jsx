@@ -144,7 +144,7 @@ export default class SpecificDatePicker extends Component {
                 onClick={() => this.onChange(date, 12, 30)}
               >
                 <Icon className="mr1" name="clock" />
-                {t`Add a time`}
+                Add a time
               </div>
             ) : (
               <HoursMinutesInput

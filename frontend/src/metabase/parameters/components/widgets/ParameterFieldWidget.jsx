@@ -3,7 +3,7 @@
 import React, { Component } from "react";
 import ReactDOM from "react-dom";
 
-import { t, ngettext, msgid } from "c-3po";
+import { t } from "c-3po";
 
 import FieldValuesWidget from "metabase/components/FieldValuesWidget";
 import Popover from "metabase/components/Popover";
@@ -54,8 +54,7 @@ export default class ParameterFieldWidget extends Component<*, Props, State> {
   static format(value, field) {
     value = normalizeValue(value);
     if (value.length > 1) {
-      const n = value.length;
-      return ngettext(msgid`${n} selection`, `${n} selections`, n);
+      return `${value.length} selections`;
     } else {
       return <RemappedValue value={value[0]} column={field} />;
     }

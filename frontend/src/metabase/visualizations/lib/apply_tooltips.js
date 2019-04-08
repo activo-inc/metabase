@@ -112,26 +112,10 @@ function applyChartTooltips(
           // edge cases handled by the code below
 
           const seriesIndex = determineSeriesIndexFromElement(this, isStacked);
-          const seriesSettings = chart.settings.series(series[seriesIndex]);
-          const seriesTitle = seriesSettings && seriesSettings.title;
-
           const card = series[seriesIndex].card;
-
-          const isMultiseries = series.length > 1;
-          const isBreakoutMultiseries = isMultiseries && card._breakoutColumn;
+          const isSingleSeriesBar =
+            this.classList.contains("bar") && series.length === 1;
           const isArea = this.classList.contains("area");
-          const isBar = this.classList.contains("bar");
-          const isSingleSeriesBar = isBar && !isMultiseries;
-
-          // always format the second column as the series name?
-          function getColumnDisplayName(col) {
-            // don't replace with series title for breakout multiseries since the series title is shown in the breakout value
-            if (col === cols[1] && !isBreakoutMultiseries && seriesTitle) {
-              return seriesTitle;
-            } else {
-              return getFriendlyName(col);
-            }
-          }
 
           let data = [];
           if (Array.isArray(d.key)) {
@@ -139,15 +123,11 @@ function applyChartTooltips(
             if (d.key._origin) {
               data = d.key._origin.row.map((value, index) => {
                 const col = d.key._origin.cols[index];
-                return {
-                  key: getColumnDisplayName(col),
-                  value: value,
-                  col,
-                };
+                return { key: getFriendlyName(col), value: value, col };
               });
             } else {
               data = d.key.map((value, index) => ({
-                key: getColumnDisplayName(cols[index]),
+                key: getFriendlyName(cols[index]),
                 value: value,
                 col: cols[index],
               }));
@@ -160,12 +140,12 @@ function applyChartTooltips(
 
             data = [
               {
-                key: getColumnDisplayName(cols[0]),
+                key: getFriendlyName(cols[0]),
                 value: d.data.key,
                 col: cols[0],
               },
               {
-                key: getColumnDisplayName(cols[1]),
+                key: getFriendlyName(cols[1]),
                 value: isNormalized
                   ? formatValue(d.data.value, {
                       number_style: "percent",
@@ -175,10 +155,6 @@ function applyChartTooltips(
                 col: { ...cols[1] },
               },
             ];
-
-            // NOTE: The below overcomplicated code is due to using index (i) of
-            // the element in the DOM, as returned by d3
-            // It would be much preferable to somehow get the row more directly
 
             // now add entries to the tooltip for columns that aren't the X or Y axis. These aren't in
             // the normal `cols` array, which is just the cols used in the graph axes; look in `_rawCols`
@@ -228,7 +204,7 @@ function applyChartTooltips(
                 }
                 // otherwise just create a new object for any other columns.
                 return {
-                  key: getColumnDisplayName(col),
+                  key: getFriendlyName(col),
                   value: rawRow[i],
                   col: col,
                 };
@@ -236,14 +212,14 @@ function applyChartTooltips(
             }
           }
 
-          if (isBreakoutMultiseries) {
-            data.unshift({
-              key: getFriendlyName(card._breakoutColumn),
-              // Use series title if it's set
-              value: seriesTitle ? seriesTitle : card._breakoutValue,
-              // Don't include the column if series title is set (it's already formatted)
-              col: seriesTitle ? null : card._breakoutColumn,
-            });
+          if (data && series.length > 1) {
+            if (card._breakoutColumn) {
+              data.unshift({
+                key: getFriendlyName(card._breakoutColumn),
+                value: card._breakoutValue,
+                col: card._breakoutColumn,
+              });
+            }
           }
 
           data = _.uniq(data, d => d.col);

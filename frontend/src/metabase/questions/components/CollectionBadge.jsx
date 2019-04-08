@@ -4,27 +4,23 @@ import { Link } from "react-router";
 
 import Icon from "metabase/components/Icon";
 
+import { entityObjectLoader } from "metabase/entities/containers/EntityObjectLoader";
 import * as Urls from "metabase/lib/urls";
-import Collection from "metabase/entities/collections";
 
 import cx from "classnames";
 
-@Collection.load({
-  id: (state, props) => props.collectionId || "root",
+@entityObjectLoader({
+  entityType: "collections",
+  entityId: (state, props) => props.collectionId || "root",
   wrapped: true,
-  loadingAndErrorWrapper: false,
-  properties: ["name"],
 })
 class CollectionBadge extends React.Component {
   render() {
-    const { analyticsContext, object, className } = this.props;
-    if (!object) {
-      return null;
-    }
+    const { analyticsContext, object } = this.props;
     return (
       <Link
         to={Urls.collection(object.id)}
-        className={cx(className, "block link")}
+        className={cx("inline-block link")}
         data-metabase-event={`${analyticsContext};Collection Badge Click`}
       >
         <Flex align="center">

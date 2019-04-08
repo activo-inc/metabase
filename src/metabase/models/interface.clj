@@ -203,26 +203,11 @@
      *  `superuser?`
      *  `(partial current-user-has-full-permissions? :write)` (you must also implement `perms-objects-set` to use this)
      *  `(partial current-user-has-partial-permissions? :write)` (you must also implement `perms-objects-set` to use
-        this)")
-
-  (^{:added "0.32.0"} can-create? ^Boolean [entity m]
-    "NEW! Check whether or not current user is allowed to CREATE a new instance of `entity` with properties in map
-    `m`.
-
-    Because this method was added YEARS after `can-read?` and `can-write?`, most models do not have an implementation
-    for this method, and instead `POST` API endpoints themselves contain the appropriate permissions logic (ick).
-    Implement this method as you come across models that are missing it."))
+        this)"))
 
 (def IObjectPermissionsDefaults
   "Default implementations for `IObjectPermissions`."
-  {:perms-objects-set
-   (constantly nil)
-
-   :can-create?
-   (fn [entity _]
-     (throw
-      (NoSuchMethodException.
-       (format "%s does not yet have an implementation for `can-create?`. Feel free to add one!" (name entity)))))})
+  {:perms-objects-set (constantly nil)})
 
 (defn superuser?
   "Is `*current-user*` is a superuser? Ignores args.

@@ -24,7 +24,7 @@ export default class AggregationPopover extends Component {
     super(props, context);
 
     this.state = {
-      aggregation: props.aggregation || [],
+      aggregation: props.isNew ? [] : props.aggregation,
       choosingField:
         props.aggregation &&
         props.aggregation.length > 1 &&
@@ -45,22 +45,15 @@ export default class AggregationPopover extends Component {
   }
 
   static propTypes = {
+    isNew: PropTypes.bool,
     aggregation: PropTypes.array,
     onCommitAggregation: PropTypes.func.isRequired,
     onClose: PropTypes.func.isRequired,
-
-    query: PropTypes.object,
-
-    // passing a dimension disables the field picker and only shows relevant aggregations
-    dimension: PropTypes.object,
-
-    // DEPRECATED: replaced with `query`
-    tableMetadata: PropTypes.object,
-    customFields: PropTypes.object,
+    tableMetadata: PropTypes.object.isRequired,
     datasetQuery: PropTypes.object,
-
+    customFields: PropTypes.object,
     availableAggregations: PropTypes.array,
-    // Restricts the shown options to contents of `availableAggregations` only
+    // Restricts the shown options to contents of `availableActions` only
     showOnlyProvidedAggregations: PropTypes.bool,
   };
 
@@ -81,15 +74,8 @@ export default class AggregationPopover extends Component {
   }
 
   onPickAggregation(agg) {
-    const { dimension } = this.props;
-    if (dimension) {
-      if (agg.aggregation && agg.aggregation.requiresField) {
-        this.commitAggregation(
-          AggregationClause.setField(agg.value, dimension.mbql()),
-        );
-      }
-    } else if (agg.custom) {
-      // check if this aggregation requires a field, if so then force user to pick that now, otherwise we are done
+    // check if this aggregation requires a field, if so then force user to pick that now, otherwise we are done
+    if (agg.custom) {
       this.setState({
         aggregation: agg.value,
         editingAggregation: true,
@@ -118,26 +104,15 @@ export default class AggregationPopover extends Component {
     });
   }
 
-  _getTableMetadata() {
-    const { query, tableMetadata } = this.props;
-    return tableMetadata || query.tableMetadata();
+  getAvailableAggregations() {
+    const { availableAggregations, query } = this.props;
+    return availableAggregations || query.table().aggregations();
   }
 
-  _getAvailableAggregations() {
-    const { availableAggregations, query, dimension } = this.props;
+  getCustomFields() {
+    const { customFields, datasetQuery } = this.props;
     return (
-      availableAggregations ||
-      (dimension && dimension.aggregations()) ||
-      query.table().aggregations()
-    );
-  }
-
-  _getCustomFields() {
-    const { customFields, datasetQuery, query } = this.props;
-    return (
-      customFields ||
-      (datasetQuery && Query.getExpressions(datasetQuery.query)) ||
-      (query && query.expressions())
+      customFields || (datasetQuery && Query.getExpressions(datasetQuery.query))
     );
   }
 
@@ -161,6 +136,7 @@ export default class AggregationPopover extends Component {
   }
 
   renderMetricTooltip(metric) {
+    let { tableMetadata } = this.props;
     return (
       <div className="p1">
         <Tooltip
@@ -168,7 +144,7 @@ export default class AggregationPopover extends Component {
             <QueryDefinitionTooltip
               type="metric"
               object={metric}
-              tableMetadata={this._getTableMetadata()}
+              tableMetadata={tableMetadata}
             />
           }
         >
@@ -179,13 +155,10 @@ export default class AggregationPopover extends Component {
   }
 
   render() {
-    const { query, dimension } = this.props;
-    const showOnlyProvidedAggregations =
-      this.props.showOnlyProvidedAggregations || dimension;
+    const { query, tableMetadata, showOnlyProvidedAggregations } = this.props;
 
-    const tableMetadata = this._getTableMetadata();
-    const customFields = this._getCustomFields();
-    const availableAggregations = this._getAvailableAggregations();
+    const customFields = this.getCustomFields();
+    const availableAggregations = this.getAvailableAggregations();
 
     const { choosingField, editingAggregation } = this.state;
     const aggregation = NamedClause.getContent(this.state.aggregation);
@@ -208,9 +181,7 @@ export default class AggregationPopover extends Component {
       sections.push({
         name: showOnlyProvidedAggregations ? null : t`Metabasics`,
         items: availableAggregations.map(aggregation => ({
-          name: dimension
-            ? aggregation.name.replace("of ...", "")
-            : aggregation.name,
+          name: aggregation.name,
           value: [aggregation.short].concat(
             aggregation.fields.map(field => null),
           ),
@@ -348,7 +319,7 @@ export default class AggregationPopover extends Component {
           <FieldList
             className={"text-green"}
             maxHeight={this.props.maxHeight - (this.state.headerHeight || 0)}
-            table={tableMetadata}
+            tableMetadata={tableMetadata}
             field={fieldId}
             fieldOptions={query.aggregationFieldOptions(agg)}
             customFieldOptions={customFields}
